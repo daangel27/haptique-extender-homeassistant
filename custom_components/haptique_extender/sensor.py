@@ -65,7 +65,7 @@ SENSOR_TYPES: tuple[HaptiqueSensorEntityDescription, ...] = (
     ),
     HaptiqueSensorEntityDescription(
         key="wifi_ip",
-        name="WiFi IP Address",
+        name="WiFi IP",
         icon="mdi:ip",
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda data: data.get("wifi", {}).get("sta", {}).get("ip"),
@@ -188,7 +188,7 @@ class HaptiqueSensor(CoordinatorEntity[HaptiqueCoordinator], SensorEntity):
         clean_hostname = hostname.replace("-", "_")
         
         self._attr_unique_id = f"{entry.entry_id}_{description.key}"
-        self._attr_name = f"{clean_hostname}_{description.name}".replace(" ", "_")
+        self._attr_has_entity_name = True
         
         self._attr_device_info = {
             "identifiers": {(DOMAIN, coordinator.device_info["mac"])},
