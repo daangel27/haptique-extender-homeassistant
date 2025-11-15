@@ -21,12 +21,12 @@ automation:
           title: "🎓 Learning Mode Activated"
           message: >
             **Device:** {{ trigger.event.data.device_name }}
-            **Command:** {{ trigger.event.data.command_label }}
+            **Command:** {{ trigger.event.data.command_name }}
             
             👉 Point your remote control at the IR sensor and press the button.
             
             ⏱️ Mode will automatically stop after capture or after {{ trigger.event.data.timeout }}s.
-          notification_id: "haptique_learning_active_{{ trigger.event.data.device_id }}"
+          notification_id: "haptique_learning_active_{{ trigger.event.data.device_name }}"
     mode: single
 
   # Notification: Learning Mode Timeout
@@ -65,16 +65,12 @@ automation:
           title: "✅ Command Learned and Saved"
           message: >
             **Device:** {{ trigger.event.data.device_name }}
-            **Command:** {{ trigger.event.data.command_label }}
+            **Command:** {{ trigger.event.data.command_name }}
             
             ✅ **IR code saved to database!**
             
-            📋 **Technical details:**
-            - Device ID: `{{ trigger.event.data.device_id }}`
-            - Command: `{{ trigger.event.data.command_name }}`
-            
             🎮 You can now use it via replay.
-          notification_id: "haptique_learned_{{ trigger.event.data.device_id }}_{{ trigger.event.data.command_name }}"
+          notification_id: "haptique_learned_{{ trigger.event.data.device_name }}_{{ trigger.event.data.command_name }}"
     mode: single
 
   # Notification: IR Code Captured Manually (without context)
@@ -118,7 +114,7 @@ automation:
             Unable to save command to database.
             
             **Possible reasons:**
-            - Missing or invalid Device ID
+            - Missing or invalid device name
             - Missing command name
             - JSON file access error
             
@@ -140,10 +136,10 @@ automation:
         data:
           title: "📤 Command Sent"
           message: >
-            {% set device_id = trigger.event.data.device_id %}
+            {% set device_name = trigger.event.data.device_name %}
             {% set command_name = trigger.event.data.command_name %}
             
-            **Device:** {{ device_id }}
+            **Device:** {{ device_name }}
             **Command:** {{ command_name }}
             
             ✅ IR signal sent successfully!
@@ -162,11 +158,11 @@ automation:
         data:
           title: "❌ Command Send Error"
           message: >
-            {% set device_id = trigger.event.data.device_id %}
+            {% set device_name = trigger.event.data.device_name %}
             {% set command_name = trigger.event.data.command_name %}
             {% set error = trigger.event.data.error | default('Unknown error') %}
             
-            **Device:** {{ device_id }}
+            **Device:** {{ device_name }}
             **Command:** {{ command_name }}
             
             ⚠️ **Error:** {{ error }}
@@ -190,10 +186,10 @@ automation:
         data:
           title: "🔍 Command Not Found"
           message: >
-            {% set device_id = trigger.event.data.device_id %}
+            {% set device_name = trigger.event.data.device_name %}
             {% set command_name = trigger.event.data.command_name %}
             
-            **Device:** {{ device_id }}
+            **Device:** {{ device_name }}
             **Command searched:** {{ command_name }}
             
             ❌ This command does not exist in the database.
@@ -219,13 +215,13 @@ automation:
         data:
           title: "🗑️ Command Deleted"
           message: >
-            {% set device_id = trigger.event.data.device_id %}
+            {% set device_name = trigger.event.data.device_name %}
             {% set command_name = trigger.event.data.command_name %}
             
-            The command **{{ command_name }}** has been deleted from device **{{ device_id }}**.
+            The command **{{ command_name }}** has been deleted from device **{{ device_name }}**.
             
             ✅ Deletion completed successfully.
-          notification_id: "haptique_command_deleted_{{ device_id }}_{{ command_name }}"
+          notification_id: "haptique_command_deleted_{{ device_name }}_{{ command_name }}"
     mode: single
 
   # Notification: Device Deleted
@@ -240,13 +236,13 @@ automation:
         data:
           title: "🗑️ Device Deleted"
           message: >
-            {% set device_id = trigger.event.data.device_id %}
+            {% set device_name = trigger.event.data.device_name %}
             {% set command_count = trigger.event.data.command_count | default(0) %}
             
-            The device **{{ device_id }}** and all its commands ({{ command_count }}) have been deleted.
+            The device **{{ device_name }}** and all its commands ({{ command_count }}) have been deleted.
             
             ✅ Deletion completed successfully.
-          notification_id: "haptique_device_deleted_{{ device_id }}"
+          notification_id: "haptique_device_deleted_{{ device_name }}"
     mode: single
 
   # Notification: Command Delete Error
@@ -261,10 +257,10 @@ automation:
         data:
           title: "❌ Command Delete Error"
           message: >
-            {% set device_id = trigger.event.data.device_id %}
+            {% set device_name = trigger.event.data.device_name %}
             {% set command_name = trigger.event.data.command_name %}
             
-            Unable to delete command **{{ command_name }}** from device **{{ device_id }}**.
+            Unable to delete command **{{ command_name }}** from device **{{ device_name }}**.
             
             **Possible reasons:**
             - The command does not exist
@@ -287,9 +283,9 @@ automation:
         data:
           title: "❌ Device Delete Error"
           message: >
-            {% set device_id = trigger.event.data.device_id %}
+            {% set device_name = trigger.event.data.device_name %}
             
-            Unable to delete device **{{ device_id }}**.
+            Unable to delete device **{{ device_name }}**.
             
             **Possible reasons:**
             - The device does not exist

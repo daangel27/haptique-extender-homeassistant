@@ -35,15 +35,9 @@ views:
                   - entity: input_text.haptique_new_device_name
                     name: Device Name
                     icon: mdi:devices
-                  - entity: input_select.haptique_new_device_type
-                    name: Device Type
-                    icon: mdi:shape
                   - entity: input_text.haptique_new_command_name
-                    name: Command ID
+                    name: Command Name
                     icon: mdi:identifier
-                  - entity: input_text.haptique_new_command_label
-                    name: Command Label
-                    icon: mdi:label
                 show_header_toggle: false
               - type: horizontal-stack
                 cards:
@@ -341,7 +335,7 @@ views:
               - type: entity
                 entity: sensor.haptique_extender_wifi_ssid
               - type: entity
-                entity: sensor.haptique_extender_wifi_ip_address
+                entity: sensor.haptique_extender_wifi_ip
               - type: entity
                 entity: sensor.haptique_extender_mac_address
               - type: entity
@@ -377,11 +371,8 @@ views:
           ```yaml
           service: haptique_extender.learn_ir_command
           data:
-            device_id: tv_samsung_living_room
             device_name: "Samsung TV Living Room"
-            device_type: "TV"
             command_name: power
-            command_label: "Power On/Off"
             timeout: 30
           ```
 
@@ -392,7 +383,7 @@ views:
           ```yaml
           service: haptique_extender.send_ir_command
           data:
-            device_id: tv_samsung_living_room
+            device_name: "Samsung TV Living Room"
             command_name: power
           ```
 
@@ -412,7 +403,7 @@ views:
           ```yaml
           service: haptique_extender.list_ir_commands
           data:
-            device_id: tv_samsung_living_room
+            device_name: "Samsung TV Living Room"
           response_variable: commands
           ```
 
@@ -423,7 +414,7 @@ views:
           ```yaml
           service: haptique_extender.delete_ir_command
           data:
-            device_id: tv_samsung_living_room
+            device_name: "Samsung TV Living Room"
             command_name: power
           ```
 
@@ -434,7 +425,7 @@ views:
           ```yaml
           service: haptique_extender.delete_ir_device
           data:
-            device_id: tv_samsung_living_room
+            device_name: "Samsung TV Living Room"
           ```
       - type: markdown
         title: 💾 IR Database

@@ -13,11 +13,8 @@ script:
     sequence:
       - service: haptique_extender.learn_ir_command
         data:
-          device_id: "{{ states('input_text.haptique_new_device_name') | slugify }}"
           device_name: "{{ states('input_text.haptique_new_device_name') }}"
-          device_type: "{{ states('input_select.haptique_new_device_type') }}"
           command_name: "{{ states('input_text.haptique_new_command_name') }}"
-          command_label: "{{ states('input_text.haptique_new_command_label') }}"
           timeout: 30
     mode: single
 
@@ -34,11 +31,6 @@ script:
           entity_id: input_text.haptique_new_command_name
         data:
           value: ""
-      - service: input_text.set_value
-        target:
-          entity_id: input_text.haptique_new_command_label
-        data:
-          value: ""
     mode: single
 
   # ========== REPLAY SCRIPTS ==========
@@ -48,7 +40,7 @@ script:
     sequence:
       - service: haptique_extender.send_ir_command
         data:
-          device_id: "{{ states('input_select.haptique_replay_device') | slugify }}"
+          device_name: "{{ states('input_select.haptique_replay_device') }}"
           command_name: "{{ states('input_select.haptique_replay_command') }}"
     mode: single
 
@@ -90,7 +82,7 @@ script:
     sequence:
       - service: haptique_extender.list_ir_commands
         data:
-          device_id: "{{ states('input_select.haptique_replay_device') | slugify }}"
+          device_name: "{{ states('input_select.haptique_replay_device') }}"
         response_variable: commands_response
       
       - service: input_select.set_options
@@ -159,7 +151,7 @@ script:
     sequence:
       - service: haptique_extender.list_ir_commands
         data:
-          device_id: "{{ states('input_select.haptique_services_device') | slugify }}"
+          device_name: "{{ states('input_select.haptique_services_device') }}"
         response_variable: commands_response
       
       - service: input_select.set_options
@@ -193,8 +185,7 @@ script:
               **{{ device_list | length }} device(s) found:**
               {% for device in device_list %}
               
-              **{{ device.name }}** ({{ device.id }})
-              - Type: {{ device.type }}
+              **{{ device.name }}**
               - Commands: {{ device.command_count }}
               - Created: {{ device.created_at }}
               {% endfor %}
@@ -209,7 +200,7 @@ script:
     sequence:
       - service: haptique_extender.list_ir_commands
         data:
-          device_id: "{{ states('input_select.haptique_services_device') | slugify }}"
+          device_name: "{{ states('input_select.haptique_services_device') }}"
         response_variable: commands_response
       
       - service: persistent_notification.create
@@ -223,7 +214,7 @@ script:
               **{{ command_list | length }} command(s) found:**
               {% for cmd in command_list %}
               
-              **{{ cmd.label }}** ({{ cmd.name }})
+              **{{ cmd.name }}**
               - Frequency: {{ cmd.freq_khz }} kHz
               - Learned: {{ cmd.learned_at }}
               {% endfor %}
@@ -238,7 +229,7 @@ script:
     sequence:
       - service: haptique_extender.delete_ir_command
         data:
-          device_id: "{{ states('input_select.haptique_services_device') | slugify }}"
+          device_name: "{{ states('input_select.haptique_services_device') }}"
           command_name: "{{ states('input_select.haptique_services_command') }}"
       
       # Notification is handled by the automation in haptique_extender_notifications.yaml
@@ -253,7 +244,7 @@ script:
     sequence:
       - service: haptique_extender.delete_ir_device
         data:
-          device_id: "{{ states('input_select.haptique_delete_device_selector') | slugify }}"
+          device_name: "{{ states('input_select.haptique_delete_device_selector') }}"
       
       # Notification is handled by the automation in haptique_extender_notifications.yaml
       # via the haptique_device_deleted event

@@ -25,7 +25,6 @@ PACKAGE_ENTITIES = [
     # Input Select
     "input_select.haptique_replay_device",
     "input_select.haptique_replay_command",
-    "input_select.haptique_new_device_type",
     "input_select.haptique_services_device",
     "input_select.haptique_services_command",
     "input_select.haptique_delete_device_selector",
@@ -33,7 +32,6 @@ PACKAGE_ENTITIES = [
     "input_text.haptique_last_rf_code",
     "input_text.haptique_new_device_name",
     "input_text.haptique_new_command_name",
-    "input_text.haptique_new_command_label",
     # Input Number
     "input_number.haptique_ir_freq",
     "input_number.haptique_ir_repeat",
@@ -136,60 +134,53 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     async def handle_learn_ir_command(call):
         """Handle learn_ir_command service."""
-        device_id = call.data.get("device_id")
-        device_name = call.data.get("device_name", device_id)
-        device_type = call.data.get("device_type", "Generic")
+        device_name = call.data.get("device_name")
         command_name = call.data.get("command_name")
-        command_label = call.data.get("command_label", command_name)
         timeout = call.data.get("timeout", 30)
 
         ir_db: IRDatabase = hass.data[DOMAIN]["ir_database"]
-        ir_db.add_device(device_id, device_name, device_type)
+        ir_db.add_device(device_name)
         
         coordinator._learning_context = {
-            "device_id": device_id,
             "device_name": device_name,
             "command_name": command_name,
-            "command_label": command_label,
         }
         
         coordinator.set_learning_mode(True)
         
         _LOGGER.info(
             "Learning mode activated for device '%s', command '%s'",
-            device_id,
+            device_name,
             command_name,
         )
         
         hass.bus.async_fire(
             "haptique_learning_activated",
             {
-                "device_id": device_id,
                 "device_name": device_name,
                 "command_name": command_name,
-                "command_label": command_label,
                 "timeout": timeout,
             }
         )
 
     async def handle_send_ir_command(call):
         """Handle send_ir_command service."""
-        device_id = call.data.get("device_id")
+        device_name = call.data.get("device_name")
         command_name = call.data.get("command_name")
         
         ir_db: IRDatabase = hass.data[DOMAIN]["ir_database"]
         
-        command = ir_db.get_command(device_id, command_name)
+        command = ir_db.get_command(device_name, command_name)
         if not command:
             _LOGGER.error(
                 "Command '%s' not found for device '%s'",
                 command_name,
-                device_id,
+                device_name,
             )
             hass.bus.async_fire(
                 "haptique_command_not_found",
                 {
-                    "device_id": device_id,
+                    "device_name": device_name,
                     "command_name": command_name,
                 }
             )
@@ -203,30 +194,22 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         )
         
         if success:
-            _LOGGER.info(
-                "Command '%s' sent for device '%s'",
-                command_name,
-                device_id,
-            )
+            _LOGGER.info("Command '%s' sent to device '%s'", command_name, device_name)
             hass.bus.async_fire(
                 "haptique_command_sent",
                 {
-                    "device_id": device_id,
+                    "device_name": device_name,
                     "command_name": command_name,
                 }
             )
         else:
-            _LOGGER.error(
-                "Failed to send command '%s' for device '%s'",
-                command_name,
-                device_id,
-            )
+            _LOGGER.error("Failed to send command '%s' to device '%s'", command_name, device_name)
             hass.bus.async_fire(
                 "haptique_command_error",
                 {
-                    "device_id": device_id,
+                    "device_name": device_name,
                     "command_name": command_name,
-                    "error": "Send failed",
+                    "error": "Failed to send IR code"
                 }
             )
 
@@ -238,60 +221,61 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     async def handle_list_ir_commands(call):
         """Handle list_ir_commands service."""
-        device_id = call.data.get("device_id")
+        device_name = call.data.get("device_name")
         ir_db: IRDatabase = hass.data[DOMAIN]["ir_database"]
-        commands = ir_db.list_commands(device_id)
+        commands = ir_db.list_commands(device_name)
         return {"commands": commands}
 
     async def handle_delete_ir_command(call):
         """Handle delete_ir_command service."""
-        device_id = call.data.get("device_id")
+        device_name = call.data.get("device_name")
         command_name = call.data.get("command_name")
         ir_db: IRDatabase = hass.data[DOMAIN]["ir_database"]
-        success = ir_db.delete_command(device_id, command_name)
+        
+        success = ir_db.delete_command(device_name, command_name)
         if success:
-            _LOGGER.info("Command '%s' deleted from device '%s'", command_name, device_id)
+            _LOGGER.info("Command '%s' deleted from device '%s'", command_name, device_name)
             hass.bus.async_fire(
                 "haptique_command_deleted",
                 {
-                    "device_id": device_id,
+                    "device_name": device_name,
                     "command_name": command_name,
                 }
             )
         else:
-            _LOGGER.error("Failed to delete command '%s' from device '%s'", command_name, device_id)
+            _LOGGER.error("Failed to delete command '%s' from device '%s'", command_name, device_name)
             hass.bus.async_fire(
                 "haptique_delete_command_error",
                 {
-                    "device_id": device_id,
+                    "device_name": device_name,
                     "command_name": command_name,
                 }
             )
 
     async def handle_delete_ir_device(call):
         """Handle delete_ir_device service."""
-        device_id = call.data.get("device_id")
+        device_name = call.data.get("device_name")
         ir_db: IRDatabase = hass.data[DOMAIN]["ir_database"]
         
-        device = ir_db.get_device(device_id)
+        device = ir_db.get_device(device_name)
         command_count = len(device.get("commands", {})) if device else 0
         
-        success = ir_db.delete_device(device_id)
+        success = ir_db.delete_device(device_name)
         if success:
-            _LOGGER.info("Device '%s' deleted", device_id)
+            _LOGGER.info("Device '%s' deleted", device_name)
             hass.bus.async_fire(
                 "haptique_device_deleted",
                 {
-                    "device_id": device_id,
+                    "device_name": device_name,
                     "command_count": command_count,
                 }
             )
         else:
-            _LOGGER.error("Failed to delete device '%s'", device_id)
+            _LOGGER.error("Failed to delete device '%s'", device_name)
             hass.bus.async_fire(
                 "haptique_delete_device_error",
                 {
-                    "device_id": device_id,
+                    "device_name": device_name,
                 }
             )
 

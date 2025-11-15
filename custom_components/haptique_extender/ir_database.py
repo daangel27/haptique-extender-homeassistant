@@ -1,4 +1,4 @@
-"""IR Device Database Manager for Haptique Extender - VERSION ULTRA CORRIGÉE."""
+"""IR Device Database Manager for Haptique Extender - VERSION SIMPLIFIÉE."""
 from __future__ import annotations
 
 import json
@@ -35,14 +35,14 @@ class IRDatabase:
                 )
                 self._data = json.loads(content)
                 
-                # CORRECTION ULTRA: Normaliser TOUTES les clés de commandes en strings
-                for device_id in self._data.get("devices", {}):
-                    commands = self._data["devices"][device_id].get("commands", {})
+                # Normaliser TOUTES les clés de commandes en strings
+                for device_name in self._data.get("devices", {}):
+                    commands = self._data["devices"][device_name].get("commands", {})
                     normalized_commands = {}
                     for key, value in commands.items():
                         # Force la clé en string
                         normalized_commands[str(key)] = value
-                    self._data["devices"][device_id]["commands"] = normalized_commands
+                    self._data["devices"][device_name]["commands"] = normalized_commands
                 
                 _LOGGER.info("IR database loaded and normalized from %s", self.db_file)
             except Exception as err:
@@ -50,18 +50,40 @@ class IRDatabase:
                 self._data = {"version": "1.0", "devices": {}}
         else:
             _LOGGER.info("IR database file not found, creating new one")
-            await self._save()
+            self._data = {"version": "1.0", "devices": {}}
+            await self._async_save()
 
-    def _save(self) -> None:
-        """Save database to JSON file (non-blocking)."""
+    async def _async_save(self) -> None:
+        """Save database to JSON file asynchronously."""
         try:
-            # CORRECTION ULTRA: Avant de sauvegarder, s'assurer que toutes les clés sont des strings
-            for device_id in self._data.get("devices", {}):
-                commands = self._data["devices"][device_id].get("commands", {})
+            # Avant de sauvegarder, s'assurer que toutes les clés sont des strings
+            for device_name in self._data.get("devices", {}):
+                commands = self._data["devices"][device_name].get("commands", {})
                 normalized_commands = {}
                 for key, value in commands.items():
                     normalized_commands[str(key)] = value
-                self._data["devices"][device_id]["commands"] = normalized_commands
+                self._data["devices"][device_name]["commands"] = normalized_commands
+            
+            data_str = json.dumps(self._data, indent=2, ensure_ascii=False)
+            
+            # Utiliser async_add_executor_job pour l'écriture du fichier
+            await self.hass.async_add_executor_job(
+                write_utf8_file, self.db_file, data_str
+            )
+            _LOGGER.debug("IR database saved to %s", self.db_file)
+        except Exception as err:
+            _LOGGER.error("Failed to save IR database: %s", err)
+
+    def _save(self) -> None:
+        """Save database to JSON file (non-blocking, synchronous)."""
+        try:
+            # Avant de sauvegarder, s'assurer que toutes les clés sont des strings
+            for device_name in self._data.get("devices", {}):
+                commands = self._data["devices"][device_name].get("commands", {})
+                normalized_commands = {}
+                for key, value in commands.items():
+                    normalized_commands[str(key)] = value
+                self._data["devices"][device_name]["commands"] = normalized_commands
             
             data_str = json.dumps(self._data, indent=2, ensure_ascii=False)
             write_utf8_file(self.db_file, data_str)
@@ -69,56 +91,41 @@ class IRDatabase:
         except Exception as err:
             _LOGGER.error("Failed to save IR database: %s", err)
 
-    def add_device(
-        self,
-        device_id: str,
-        device_name: str | None = None,
-        device_type: str | None = None,
-    ) -> bool:
+    def add_device(self, device_name: str) -> bool:
         """Add or update a device."""
-        if device_id not in self._data["devices"]:
-            self._data["devices"][device_id] = {
-                "name": device_name or device_id,
-                "type": device_type or "Generic",
+        if device_name not in self._data["devices"]:
+            self._data["devices"][device_name] = {
                 "created_at": dt_util.utcnow().isoformat(),
                 "commands": {},
             }
             self._save()
-            _LOGGER.info("Device '%s' added to database", device_id)
+            _LOGGER.info("Device '%s' added to database", device_name)
             return True
         else:
-            # Update existing device info
-            if device_name:
-                self._data["devices"][device_id]["name"] = device_name
-            if device_type:
-                self._data["devices"][device_id]["type"] = device_type
-            self._save()
-            _LOGGER.info("Device '%s' updated in database", device_id)
+            _LOGGER.info("Device '%s' already exists", device_name)
             return True
 
     def add_command(
         self,
-        device_id: str,
+        device_name: str,
         command_name: str,
         freq_khz: int,
         duty: int,
         repeat: int,
         raw_data: list[int],
-        command_label: str | None = None,
     ) -> bool:
         """Add or update a command for a device."""
-        if device_id not in self._data["devices"]:
-            _LOGGER.error("Device '%s' not found in database", device_id)
+        if device_name not in self._data["devices"]:
+            _LOGGER.error("Device '%s' not found in database", device_name)
             return False
 
-        # CORRECTION ULTRA: Force command_name à string ET strip whitespace
+        # Force command_name à string ET strip whitespace
         command_name = str(command_name).strip()
         
         _LOGGER.info("Adding command '%s' (type: %s) to device '%s'", 
-                    command_name, type(command_name).__name__, device_id)
+                    command_name, type(command_name).__name__, device_name)
 
-        self._data["devices"][device_id]["commands"][command_name] = {
-            "name": command_label or command_name,
+        self._data["devices"][device_name]["commands"][command_name] = {
             "freq_khz": freq_khz,
             "duty": duty,
             "repeat": repeat,
@@ -127,26 +134,26 @@ class IRDatabase:
         }
         self._save()
         _LOGGER.info(
-            "Command '%s' added to device '%s'", command_name, device_id
+            "Command '%s' added to device '%s'", command_name, device_name
         )
         return True
 
     def get_command(
-        self, device_id: str, command_name: str
+        self, device_name: str, command_name: str
     ) -> dict[str, Any] | None:
         """Get a specific command."""
-        if device_id not in self._data["devices"]:
-            _LOGGER.error("Device '%s' not found", device_id)
+        if device_name not in self._data["devices"]:
+            _LOGGER.error("Device '%s' not found", device_name)
             return None
 
-        # CORRECTION ULTRA: Force command_name à string ET strip whitespace
+        # Force command_name à string ET strip whitespace
         command_name = str(command_name).strip()
         
-        commands = self._data["devices"][device_id].get("commands", {})
+        commands = self._data["devices"][device_name].get("commands", {})
         
-        # CORRECTION ULTRA: Log pour debug
+        # Log pour debug
         _LOGGER.debug("Looking for command '%s' (type: %s) in device '%s'", 
-                     command_name, type(command_name).__name__, device_id)
+                     command_name, type(command_name).__name__, device_name)
         _LOGGER.debug("Available commands: %s (types: %s)", 
                      list(commands.keys()),
                      [f"{k}:{type(k).__name__}" for k in commands.keys()])
@@ -166,63 +173,60 @@ class IRDatabase:
         
         _LOGGER.error(
             "Command '%s' not found for device '%s' (available: %s)", 
-            command_name, device_id, list(commands.keys())
+            command_name, device_name, list(commands.keys())
         )
         return None
 
-    def get_device(self, device_id: str) -> dict[str, Any] | None:
+    def get_device(self, device_name: str) -> dict[str, Any] | None:
         """Get device info."""
-        return self._data["devices"].get(device_id)
+        return self._data["devices"].get(device_name)
 
     def list_devices(self) -> list[dict[str, Any]]:
         """List all devices."""
         devices = []
-        for device_id, device_data in self._data["devices"].items():
+        for device_name, device_data in self._data["devices"].items():
             devices.append(
                 {
-                    "id": device_id,
-                    "name": device_data.get("name", device_id),
-                    "type": device_data.get("type", "Generic"),
+                    "name": device_name,
                     "command_count": len(device_data.get("commands", {})),
                     "created_at": device_data.get("created_at"),
                 }
             )
         return devices
 
-    def list_commands(self, device_id: str) -> list[dict[str, Any]]:
+    def list_commands(self, device_name: str) -> list[dict[str, Any]]:
         """List all commands for a device."""
-        if device_id not in self._data["devices"]:
-            _LOGGER.error("Device '%s' not found", device_id)
+        if device_name not in self._data["devices"]:
+            _LOGGER.error("Device '%s' not found", device_name)
             return []
 
         commands = []
-        for cmd_name, cmd_data in self._data["devices"][device_id].get(
+        for cmd_name, cmd_data in self._data["devices"][device_name].get(
             "commands", {}
         ).items():
-            # CORRECTION ULTRA: S'assurer que cmd_name est toujours une string
+            # S'assurer que cmd_name est toujours une string
             cmd_name_str = str(cmd_name).strip()
             commands.append(
                 {
                     "name": cmd_name_str,
-                    "label": cmd_data.get("name", cmd_name_str),
                     "freq_khz": cmd_data.get("freq_khz"),
                     "learned_at": cmd_data.get("learned_at"),
                 }
             )
         return commands
 
-    def delete_command(self, device_id: str, command_name: str) -> bool:
+    def delete_command(self, device_name: str, command_name: str) -> bool:
         """Delete a command from a device."""
-        if device_id not in self._data["devices"]:
-            _LOGGER.error("Device '%s' not found", device_id)
+        if device_name not in self._data["devices"]:
+            _LOGGER.error("Device '%s' not found", device_name)
             return False
 
-        # CORRECTION ULTRA: Force command_name à string ET strip whitespace
+        # Force command_name à string ET strip whitespace
         command_name = str(command_name).strip()
 
-        commands = self._data["devices"][device_id].get("commands", {})
+        commands = self._data["devices"][device_name].get("commands", {})
         
-        # CORRECTION ULTRA: Chercher la clé en normalisant
+        # Chercher la clé en normalisant
         key_to_delete = None
         for key in list(commands.keys()):
             normalized_key = str(key).strip()
@@ -234,53 +238,51 @@ class IRDatabase:
             del commands[key_to_delete]
             self._save()
             _LOGGER.info(
-                "Command '%s' deleted from device '%s'", command_name, device_id
+                "Command '%s' deleted from device '%s'", command_name, device_name
             )
             return True
 
         _LOGGER.error(
             "Command '%s' not found for device '%s' (available: %s)", 
-            command_name, device_id, list(commands.keys())
+            command_name, device_name, list(commands.keys())
         )
         return False
 
-    def delete_device(self, device_id: str) -> bool:
+    def delete_device(self, device_name: str) -> bool:
         """Delete a device and all its commands."""
-        if device_id in self._data["devices"]:
-            del self._data["devices"][device_id]
+        if device_name in self._data["devices"]:
+            del self._data["devices"][device_name]
             self._save()
-            _LOGGER.info("Device '%s' deleted from database", device_id)
+            _LOGGER.info("Device '%s' deleted from database", device_name)
             return True
 
-        _LOGGER.error("Device '%s' not found", device_id)
+        _LOGGER.error("Device '%s' not found", device_name)
         return False
 
-    def export_device(self, device_id: str) -> dict[str, Any] | None:
+    def export_device(self, device_name: str) -> dict[str, Any] | None:
         """Export device data for sharing."""
-        return self.get_device(device_id)
+        return self.get_device(device_name)
 
     def import_device(self, device_data: dict[str, Any]) -> bool:
         """Import device data from export."""
         try:
-            device_id = device_data.get("id")
-            if not device_id:
-                _LOGGER.error("Device ID missing in import data")
+            device_name = device_data.get("name")
+            if not device_name:
+                _LOGGER.error("Device name missing in import data")
                 return False
 
-            # CORRECTION ULTRA: Normaliser les commandes importées
+            # Normaliser les commandes importées
             commands = device_data.get("commands", {})
             normalized_commands = {}
             for key, value in commands.items():
                 normalized_commands[str(key).strip()] = value
 
-            self._data["devices"][device_id] = {
-                "name": device_data.get("name", device_id),
-                "type": device_data.get("type", "Generic"),
+            self._data["devices"][device_name] = {
                 "created_at": device_data.get("created_at", dt_util.utcnow().isoformat()),
                 "commands": normalized_commands,
             }
             self._save()
-            _LOGGER.info("Device '%s' imported successfully", device_id)
+            _LOGGER.info("Device '%s' imported successfully", device_name)
             return True
         except Exception as err:
             _LOGGER.error("Failed to import device: %s", err)

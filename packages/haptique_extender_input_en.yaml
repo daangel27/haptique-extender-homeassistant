@@ -21,11 +21,6 @@ input_text:
     name: "New command name"
     max: 50
     icon: mdi:identifier
-  
-  haptique_new_command_label:
-    name: "Command label"
-    max: 100
-    icon: mdi:label
 
 input_number:
   haptique_ir_freq:
@@ -68,20 +63,6 @@ input_boolean:
     initial: off
 
 input_select:
-  # Device type for learning
-  haptique_new_device_type:
-    name: "Device type"
-    options:
-      - "TV"
-      - "AC"
-      - "Fan"
-      - "Light"
-      - "Audio"
-      - "Projector"
-      - "Generic"
-    initial: "TV"
-    icon: mdi:shape
-  
   # ========== REPLAY SELECTORS ==========
   # Device selector for replay
   haptique_replay_device:
