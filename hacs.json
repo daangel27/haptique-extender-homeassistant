@@ -1,0 +1,7 @@
+{
+  "name": "Haptique Extender",
+  "render_readme": true,
+  "domains": ["haptique_extender"],
+  "homeassistant": "2025.2.0"
+  "integration_type": "hub"
+}

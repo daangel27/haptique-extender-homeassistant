@@ -1,0 +1,479 @@
+title: Haptique Manager
+icon: mdi:remote
+theme: default
+views:
+  - type: sections
+    max_columns: 4
+    dense_section_placement: true
+    path: ''
+    sections:
+      - type: grid
+        cards:
+          - type: vertical-stack
+            cards:
+              - type: markdown
+                content: >
+                  ### 📋 Instructions d'apprentissage
+
+                  1. **Remplissez le formulaire ci-dessus** avec les
+                  informations du device et de la commande
+
+                  2. **Cliquez sur "Apprendre"** - le mode apprentissage sera
+                  activé automatiquement
+
+                  3. **Pointez votre télécommande** vers le capteur IR
+
+                  4. **Appuyez sur le bouton** de la télécommande
+
+                  5. **La commande sera enregistrée** automatiquement dans la
+                  base de données
+                     
+                  **💡 Note:** Les listes de devices se mettent à jour
+                  automatiquement après chaque apprentissage !
+              - type: entities
+                title: 🎓 Apprendre une commande IR
+                entities:
+                  - entity: input_text.haptique_new_device_name
+                    name: Nom du Device
+                    icon: mdi:devices
+                  - entity: input_select.haptique_new_device_type
+                    name: Type de Device
+                    icon: mdi:shape
+                  - entity: input_text.haptique_new_command_name
+                    name: ID de la Commande
+                    icon: mdi:identifier
+                  - entity: input_text.haptique_new_command_label
+                    name: Libellé de la Commande
+                    icon: mdi:label
+                show_header_toggle: false
+              - type: horizontal-stack
+                cards:
+                  - show_name: true
+                    show_icon: true
+                    type: button
+                    name: Apprendre
+                    icon: mdi:school
+                    tap_action:
+                      action: call-service
+                      service: script.haptique_learn_from_helpers
+                    hold_action:
+                      action: none
+                    icon_height: 50px
+                  - show_name: true
+                    show_icon: true
+                    type: button
+                    name: Effacer
+                    icon: mdi:eraser
+                    tap_action:
+                      action: call-service
+                      service: script.haptique_clear_helpers
+                    hold_action:
+                      action: none
+                    icon_height: 50px
+      - type: grid
+        cards:
+          - type: vertical-stack
+            cards:
+              - type: markdown
+                content: >
+                  ### 📋 Instructions d'envoi
+
+
+                  1. **Sélectionnez un Appareil** dans la liste déroulante
+
+                  2. **Sélectionnez une commande** (la liste se met à jour
+                  automatiquement)
+
+                  3. **Cliquez sur "Envoyer"** pour transmettre le code IR
+
+
+                  **🔄 Rafraichissement Automatique:**
+
+                  - Les commandes se mettent à jour automatiquement quand vous
+                  changez d'Appareil
+
+                  - Les listes se rafraîchissent au démarrage de Home Assistant
+
+                  - Bouton manuel disponible si besoin
+              - type: entities
+                title: 📤 Envoyer une commande IR
+                entities:
+                  - entity: input_select.haptique_replay_device
+                    name: Sélectionner un Device
+                    icon: mdi:devices
+                  - entity: input_select.haptique_replay_command
+                    name: Sélectionner une Commande
+                    icon: mdi:gesture-tap-button
+                show_header_toggle: false
+              - type: horizontal-stack
+                cards:
+                  - show_name: true
+                    show_icon: true
+                    type: button
+                    name: Envoyer
+                    icon: mdi:send
+                    tap_action:
+                      action: call-service
+                      service: script.haptique_send_from_selectors
+                    hold_action:
+                      action: none
+                    icon_height: 50px
+          - type: horizontal-stack
+            cards:
+              - show_name: true
+                show_icon: true
+                type: button
+                name: 🔄 Rafraîchir la liste des appareils
+                icon: mdi:refresh
+                tap_action:
+                  action: call-service
+                  service: script.haptique_update_device_list
+                hold_action:
+                  action: none
+                icon_height: 50px
+      - type: grid
+        cards:
+          - type: entities
+            title: 📊 Dernier code IR appris
+            entities:
+              - entity: sensor.haptique_extender_last_learn_ir_code
+                name: Timestamp
+              - type: attribute
+                entity: sensor.haptique_extender_last_learn_ir_code
+                attribute: count
+                name: Nombre de valeurs
+              - type: attribute
+                entity: sensor.haptique_extender_last_learn_ir_code
+                attribute: freq_khz
+                name: Fréquence (kHz)
+              - type: attribute
+                entity: sensor.haptique_extender_last_learn_ir_code
+                attribute: frames
+                name: Frames
+              - type: attribute
+                entity: sensor.haptique_extender_last_learn_ir_code
+                attribute: raw_data
+                name: IR Code
+            show_header_toggle: false
+            grid_options:
+              columns: full
+              rows: 8
+        column_span: 2
+    badges: []
+    title: Apprentissage
+    icon: mdi:school
+    cards: []
+  - type: sections
+    max_columns: 4
+    title: Database Management
+    path: database
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: 📋 Lister les Appareils
+            heading_style: title
+          - type: vertical-stack
+            cards:
+              - show_name: true
+                show_icon: true
+                type: button
+                name: 📋 Lister tous les Appareils
+                icon: mdi:view-list
+                tap_action:
+                  action: call-service
+                  service: script.haptique_list_all_devices
+                hold_action:
+                  action: none
+                icon_height: 50px
+              - type: markdown
+                content: >
+                  **💡 Note:** Affiche la liste complète de tous les devices
+                  dans une notification.
+                text_only: true
+            grid_options:
+              rows: 4
+              columns: full
+          - show_name: true
+            show_icon: true
+            type: button
+            name: 🔄 Rafraîchir toutes les listes
+            icon: mdi:refresh-auto
+            tap_action:
+              action: call-service
+              service: script.haptique_update_all_services_lists
+            hold_action:
+              action: none
+            show_state: false
+            grid_options:
+              columns: full
+              rows: 2
+        column_span: 1
+      - type: grid
+        cards:
+          - type: heading
+            heading: 📋 Lister les commandes d'un Appareil
+            heading_style: title
+          - type: vertical-stack
+            cards:
+              - type: entities
+                entities:
+                  - entity: input_select.haptique_services_device
+                    name: Sélectionner un Device
+                    icon: mdi:database
+                show_header_toggle: false
+                state_color: true
+              - show_name: true
+                show_icon: true
+                type: button
+                name: Lister les Commandes
+                icon: mdi:format-list-bulleted
+                tap_action:
+                  action: call-service
+                  service: script.haptique_list_commands_from_services
+                hold_action:
+                  action: none
+                icon_height: 50px
+                show_state: false
+              - type: markdown
+                content: >
+                  **💡 Note:** Sélectionnez un device dans la liste, puis
+                  cliquez pour voir toutes ses commandes dans une notification.
+                title: 📋 Lister les commandes d'un Device
+                text_only: true
+            grid_options:
+              columns: full
+              rows: 7
+      - type: grid
+        cards:
+          - type: heading
+            heading: 🗑️ Supprimer un Appareil
+            heading_style: title
+          - type: vertical-stack
+            cards:
+              - type: entities
+                entities:
+                  - entity: input_select.haptique_delete_device_selector
+                    name: Sélectionner un Device
+                    icon: mdi:delete-forever
+                show_header_toggle: false
+              - type: button
+                name: Supprimer l'Appareil
+                icon: mdi:delete-forever
+                icon_height: 50px
+                tap_action:
+                  action: call-service
+                  service: script.haptique_delete_device_from_services
+                hold_action:
+                  action: none
+                confirmation:
+                  text: >-
+                    ⚠️ Êtes-vous sûr de vouloir supprimer ce device ET TOUTES
+                    ses commandes ?
+              - type: markdown
+                content: >
+                  **⚠️ ATTENTION:** Cette action supprime l'Appareil ET toutes
+                  ses commandes !
+                text_only: true
+            grid_options:
+              columns: full
+              rows: 7
+      - type: grid
+        cards:
+          - type: heading
+            heading: 🗑️ Supprimer une commande
+            heading_style: title
+          - type: vertical-stack
+            cards:
+              - type: entities
+                entities:
+                  - entity: input_select.haptique_services_device
+                    name: Sélectionner un Device
+                    icon: mdi:database
+                  - entity: input_select.haptique_services_command
+                    name: Sélectionner une Commande
+                    icon: mdi:code-braces
+                show_header_toggle: false
+              - type: button
+                name: Supprimer la Commande
+                icon: mdi:delete
+                tap_action:
+                  action: call-service
+                  service: script.haptique_delete_command_from_services
+                hold_action:
+                  action: none
+                icon_height: 50px
+                confirmation:
+                  text: Êtes-vous sûr de vouloir supprimer cette commande ?
+              - type: markdown
+                content: >
+                  **💡 Note:** Sélectionnez un device, sélectionnez une
+                  commande, puis cliquez sur supprimer la commande
+                text_only: true
+            grid_options:
+              columns: full
+              rows: auto
+        column_span: 1
+    header:
+      card:
+        type: markdown
+        text_only: true
+        content: |-
+          # Gestion Database
+          Chemin physique Database : **/config/haptique_ir_devices.json**
+      layout: center
+      badges_position: bottom
+      badges_wrap: wrap
+    icon: mdi:database-cog-outline
+    cards: []
+    theme: Material You Dark
+    dense_section_placement: false
+    background:
+      opacity: 20
+      alignment: center
+      size: cover
+      repeat: repeat
+      attachment: fixed
+    top_margin: false
+  - type: sections
+    max_columns: 2
+    title: Sensors
+    path: sensors
+    icon: mdi:monitor-eye
+    sections:
+      - type: grid
+        cards:
+          - type: vertical-stack
+            cards:
+              - type: entity
+                entity: binary_sensor.haptique_extender_wifi_connected
+              - type: entity
+                entity: sensor.haptique_extender_wifi_signal
+              - type: entity
+                entity: sensor.haptique_extender_wifi_ssid
+              - type: entity
+                entity: sensor.haptique_extender_wifi_ip_address
+              - type: entity
+                entity: sensor.haptique_extender_mac_address
+              - type: entity
+                entity: sensor.haptique_extender_firmware_version
+      - type: grid
+        cards:
+          - type: vertical-stack
+            cards:
+              - type: entity
+                entity: sensor.haptique_extender_last_learn_ir_code
+              - type: entity
+                entity: sensor.haptique_extender_learning_mode
+              - type: entity
+                entity: sensor.haptique_extender_ir_last_frequency
+              - type: entity
+                entity: sensor.haptique_extender_ir_rx_count
+              - type: entity
+                entity: sensor.haptique_extender_ir_storage_max
+              - type: entity
+                entity: sensor.haptique_extender_ir_storage_usage
+              - type: entity
+                entity: sensor.haptique_extender_ir_commands_stored
+  - title: Help
+    icon: mdi:help-circle
+    path: help
+    badges: []
+    cards:
+      - type: markdown
+        title: 📋 Exemples d'utilisation des services IR
+        content: |
+          ### 🎓 Apprendre une commande IR
+
+          ```yaml
+          service: haptique_extender.learn_ir_command
+          data:
+            device_id: tv_samsung_salon
+            device_name: "TV Samsung Salon"
+            device_type: "TV"
+            command_name: power
+            command_label: "Marche/Arrêt"
+            timeout: 30
+          ```
+
+          ---
+
+          ### 📤 Envoyer une commande IR
+
+          ```yaml
+          service: haptique_extender.send_ir_command
+          data:
+            device_id: tv_samsung_salon
+            command_name: power
+          ```
+
+          ---
+
+          ### 📋 Lister les Appareils
+
+          ```yaml
+          service: haptique_extender.list_ir_devices
+          response_variable: devices
+          ```
+
+          ---
+
+          ### 📋 Lister les commandes d'un Appareil
+
+          ```yaml
+          service: haptique_extender.list_ir_commands
+          data:
+            device_id: tv_samsung_salon
+          response_variable: commands
+          ```
+
+          ---
+
+          ### 🗑️ Supprimer une commande
+
+          ```yaml
+          service: haptique_extender.delete_ir_command
+          data:
+            device_id: tv_samsung_salon
+            command_name: power
+          ```
+
+          ---
+
+          ### 🗑️ Supprimer un Appareil
+
+          ```yaml
+          service: haptique_extender.delete_ir_device
+          data:
+            device_id: tv_samsung_salon
+          ```
+      - type: markdown
+        title: 💾 Base de données IR
+        content: |+
+          ### Emplacement du fichier
+
+          ```
+          /config/haptique_ir_devices.json
+          ```
+          ### Pensez à faire une Sauvegarde régulière du fichier !!
+
+
+
+          ### Rafraichissement Automatique
+
+          Les listes se rafraîchissent automatiquement :
+          - ✅ Au démarrage de Home Assistant
+          - ✅ Après apprentissage d'une commande
+          - ✅ Au changement de device sélectionné
+          - ✅ Après suppression
+
+
+
+    type: masonry
+    theme: Material You Dark
+    background:
+      opacity: 10
+      alignment: center
+      size: cover
+      repeat: repeat
+      attachment: fixed

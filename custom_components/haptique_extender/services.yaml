@@ -1,0 +1,175 @@
+send_ir_code:
+  name: Send IR Code
+  description: Send an infrared code to the Haptique Extender device
+  target:
+    device:
+      integration: haptique_extender
+  fields:
+    raw_data:
+      name: Raw Data
+      description: List of timing values in microseconds
+      required: true
+      example: "[9000, 4500, 560, 560, 560, 1680]"
+      selector:
+        object:
+    freq_khz:
+      name: Frequency (kHz)
+      description: Carrier frequency in kHz
+      required: false
+      default: 38
+      selector:
+        number:
+          min: 10
+          max: 60
+          unit_of_measurement: kHz
+    duty:
+      name: Duty Cycle
+      description: PWM duty cycle percentage
+      required: false
+      default: 33
+      selector:
+        number:
+          min: 10
+          max: 90
+          unit_of_measurement: "%"
+    repeat:
+      name: Repeat
+      description: Number of times to repeat the signal
+      required: false
+      default: 1
+      selector:
+        number:
+          min: 1
+          max: 10
+
+# IR DATABASE SERVICES
+
+learn_ir_command:
+  name: Learn IR Command
+  description: Learn and save an IR command to the database
+  fields:
+    device_id:
+      name: Device ID
+      description: Unique identifier for the device (e.g., tv_samsung_salon)
+      required: true
+      example: "tv_samsung_salon"
+      selector:
+        text:
+    device_name:
+      name: Device Name
+      description: Human-readable device name (optional, defaults to device_id)
+      required: false
+      example: "TV Samsung Salon"
+      selector:
+        text:
+    device_type:
+      name: Device Type
+      description: Type of device (optional)
+      required: false
+      example: "TV"
+      selector:
+        select:
+          options:
+            - "TV"
+            - "AC"
+            - "Fan"
+            - "Light"
+            - "Audio"
+            - "Projector"
+            - "Generic"
+    command_name:
+      name: Command Name
+      description: Command identifier (e.g., power, volume_up)
+      required: true
+      example: "power"
+      selector:
+        text:
+    command_label:
+      name: Command Label
+      description: Human-readable command name (optional, defaults to command_name)
+      required: false
+      example: "Power On/Off"
+      selector:
+        text:
+    timeout:
+      name: Timeout
+      description: Learning timeout in seconds
+      required: false
+      default: 30
+      selector:
+        number:
+          min: 5
+          max: 60
+          unit_of_measurement: "s"
+
+send_ir_command:
+  name: Send IR Command
+  description: Send a learned IR command from the database
+  fields:
+    device_id:
+      name: Device ID
+      description: Device identifier
+      required: true
+      example: "tv_samsung_salon"
+      selector:
+        text:
+    command_name:
+      name: Command Name
+      description: Command identifier
+      required: true
+      example: "power"
+      selector:
+        text:
+
+list_ir_devices:
+  name: List IR Devices
+  description: List all devices in the IR database
+  response:
+    type: dict
+    description: List of devices with their details
+
+list_ir_commands:
+  name: List IR Commands
+  description: List all commands for a specific device
+  fields:
+    device_id:
+      name: Device ID
+      description: Device identifier
+      required: true
+      example: "tv_samsung_salon"
+      selector:
+        text:
+  response:
+    type: dict
+    description: List of commands for the device
+
+delete_ir_command:
+  name: Delete IR Command
+  description: Delete a command from the database
+  fields:
+    device_id:
+      name: Device ID
+      description: Device identifier
+      required: true
+      example: "tv_samsung_salon"
+      selector:
+        text:
+    command_name:
+      name: Command Name
+      description: Command identifier to delete
+      required: true
+      example: "power"
+      selector:
+        text:
+
+delete_ir_device:
+  name: Delete IR Device
+  description: Delete a device and all its commands from the database
+  fields:
+    device_id:
+      name: Device ID
+      description: Device identifier to delete
+      required: true
+      example: "tv_samsung_salon"
+      selector:
+        text:

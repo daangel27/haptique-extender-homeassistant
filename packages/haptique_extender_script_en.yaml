@@ -1,0 +1,263 @@
+# Haptique Extender - SCRIPTS
+# Place this file in: /config/packages/haptique_extender_script.yaml
+
+# ============================================
+# SCRIPTS
+# ============================================
+
+script:
+  # ========== LEARNING SCRIPTS ==========
+  
+  haptique_learn_from_helpers:
+    alias: "Haptique - Learn from Helpers"
+    sequence:
+      - service: haptique_extender.learn_ir_command
+        data:
+          device_id: "{{ states('input_text.haptique_new_device_name') | slugify }}"
+          device_name: "{{ states('input_text.haptique_new_device_name') }}"
+          device_type: "{{ states('input_select.haptique_new_device_type') }}"
+          command_name: "{{ states('input_text.haptique_new_command_name') }}"
+          command_label: "{{ states('input_text.haptique_new_command_label') }}"
+          timeout: 30
+    mode: single
+
+  haptique_clear_helpers:
+    alias: "Haptique - Clear Helpers"
+    sequence:
+      - service: input_text.set_value
+        target:
+          entity_id: input_text.haptique_new_device_name
+        data:
+          value: ""
+      - service: input_text.set_value
+        target:
+          entity_id: input_text.haptique_new_command_name
+        data:
+          value: ""
+      - service: input_text.set_value
+        target:
+          entity_id: input_text.haptique_new_command_label
+        data:
+          value: ""
+    mode: single
+
+  # ========== REPLAY SCRIPTS ==========
+  
+  haptique_send_from_selectors:
+    alias: "Haptique - Send from Selectors"
+    sequence:
+      - service: haptique_extender.send_ir_command
+        data:
+          device_id: "{{ states('input_select.haptique_replay_device') | slugify }}"
+          command_name: "{{ states('input_select.haptique_replay_command') }}"
+    mode: single
+
+  # ========== DATABASE MANAGEMENT SCRIPTS ==========
+  
+  haptique_update_device_list:
+    alias: "Haptique - Update Device List"
+    description: "Updates the list of available devices"
+    sequence:
+      - service: haptique_extender.list_ir_devices
+        data: {}
+        response_variable: devices_response
+      
+      - service: input_select.set_options
+        target:
+          entity_id: input_select.haptique_replay_device
+        data:
+          options: >
+            {% set device_list = devices_response.devices | default([]) %}
+            {% if device_list | length > 0 %}
+              {{ ["No device available"] + (device_list | map(attribute='name') | list) }}
+            {% else %}
+              ["No device available"]
+            {% endif %}
+      
+      # If devices exist, select the first real device (not "No device available")
+      - condition: template
+        value_template: "{{ (devices_response.devices | default([]) | length) > 0 }}"
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.haptique_replay_device
+        data:
+          option: "{{ devices_response.devices[0].name }}"
+    mode: single
+
+  haptique_update_command_list:
+    alias: "Haptique - Update Command List (Replay)"
+    description: "Updates the command list for the selected device (Replay)"
+    sequence:
+      - service: haptique_extender.list_ir_commands
+        data:
+          device_id: "{{ states('input_select.haptique_replay_device') | slugify }}"
+        response_variable: commands_response
+      
+      - service: input_select.set_options
+        target:
+          entity_id: input_select.haptique_replay_command
+        data:
+          options: >
+            {% set command_list = commands_response.commands | default([]) %}
+            {% if command_list | length > 0 %}
+              {{ ["No command available"] + (command_list | map(attribute='name') | list) }}
+            {% else %}
+              ["No command available"]
+            {% endif %}
+      
+      # If commands exist, select the first real command (not "No command available")
+      - condition: template
+        value_template: "{{ (commands_response.commands | default([]) | length) > 0 }}"
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.haptique_replay_command
+        data:
+          option: "{{ commands_response.commands[0].name }}"
+    mode: single
+
+  haptique_update_all_services_lists:
+    alias: "Haptique - Update All Services Lists"
+    description: "Updates all lists for DB services"
+    sequence:
+      # Update services device list
+      - service: haptique_extender.list_ir_devices
+        data: {}
+        response_variable: devices_response
+      
+      - service: input_select.set_options
+        target:
+          entity_id: input_select.haptique_services_device
+        data:
+          options: >
+            {% set device_list = devices_response.devices | default([]) %}
+            {% if device_list | length > 0 %}
+              {{ ["Select a device"] + (device_list | map(attribute='name') | list) }}
+            {% else %}
+              ["Select a device"]
+            {% endif %}
+      
+      # Update delete device list
+      - service: input_select.set_options
+        target:
+          entity_id: input_select.haptique_delete_device_selector
+        data:
+          options: >
+            {% set device_list = devices_response.devices | default([]) %}
+            {% if device_list | length > 0 %}
+              {{ ["Select a device"] + (device_list | map(attribute='name') | list) }}
+            {% else %}
+              ["Select a device"]
+            {% endif %}
+      
+      # Update replay device list
+      - service: script.haptique_update_device_list
+    mode: single
+
+  haptique_update_services_command_list:
+    alias: "Haptique - Update Command List (Services DB)"
+    description: "Updates the command list for Services DB"
+    sequence:
+      - service: haptique_extender.list_ir_commands
+        data:
+          device_id: "{{ states('input_select.haptique_services_device') | slugify }}"
+        response_variable: commands_response
+      
+      - service: input_select.set_options
+        target:
+          entity_id: input_select.haptique_services_command
+        data:
+          options: >
+            {% set command_list = commands_response.commands | default([]) %}
+            {% if command_list | length > 0 %}
+              {{ ["Select a command"] + (command_list | map(attribute='name') | list) }}
+            {% else %}
+              ["Select a command"]
+            {% endif %}
+    mode: single
+
+  # ========== LIST/DELETE SCRIPTS ==========
+  
+  haptique_list_all_devices:
+    alias: "Haptique - List All Devices"
+    sequence:
+      - service: haptique_extender.list_ir_devices
+        data: {}
+        response_variable: devices_response
+      
+      - service: persistent_notification.create
+        data:
+          title: "📋 IR Devices List"
+          message: >
+            {% set device_list = devices_response.devices | default([]) %}
+            {% if device_list | length > 0 %}
+              **{{ device_list | length }} device(s) found:**
+              {% for device in device_list %}
+              
+              **{{ device.name }}** ({{ device.id }})
+              - Type: {{ device.type }}
+              - Commands: {{ device.command_count }}
+              - Created: {{ device.created_at }}
+              {% endfor %}
+            {% else %}
+              No devices found in database.
+            {% endif %}
+          notification_id: "haptique_devices_list"
+    mode: single
+
+  haptique_list_commands_from_services:
+    alias: "Haptique - List Commands (Services)"
+    sequence:
+      - service: haptique_extender.list_ir_commands
+        data:
+          device_id: "{{ states('input_select.haptique_services_device') | slugify }}"
+        response_variable: commands_response
+      
+      - service: persistent_notification.create
+        data:
+          title: "📋 Device Commands"
+          message: >
+            {% set command_list = commands_response.commands | default([]) %}
+            **Device:** {{ states('input_select.haptique_services_device') }}
+            
+            {% if command_list | length > 0 %}
+              **{{ command_list | length }} command(s) found:**
+              {% for cmd in command_list %}
+              
+              **{{ cmd.label }}** ({{ cmd.name }})
+              - Frequency: {{ cmd.freq_khz }} kHz
+              - Learned: {{ cmd.learned_at }}
+              {% endfor %}
+            {% else %}
+              No commands found for this device.
+            {% endif %}
+          notification_id: "haptique_commands_list"
+    mode: single
+
+  haptique_delete_command_from_services:
+    alias: "Haptique - Delete Command (Services)"
+    sequence:
+      - service: haptique_extender.delete_ir_command
+        data:
+          device_id: "{{ states('input_select.haptique_services_device') | slugify }}"
+          command_name: "{{ states('input_select.haptique_services_command') }}"
+      
+      # Notification is handled by the automation in haptique_extender_notifications.yaml
+      # via the haptique_command_deleted event
+      
+      - delay: "00:00:01"
+      - service: script.haptique_update_all_services_lists
+    mode: single
+
+  haptique_delete_device_from_services:
+    alias: "Haptique - Delete Device (Services)"
+    sequence:
+      - service: haptique_extender.delete_ir_device
+        data:
+          device_id: "{{ states('input_select.haptique_delete_device_selector') | slugify }}"
+      
+      # Notification is handled by the automation in haptique_extender_notifications.yaml
+      # via the haptique_device_deleted event
+      
+      - delay: "00:00:01"
+      - service: script.haptique_update_all_services_lists
+    mode: single

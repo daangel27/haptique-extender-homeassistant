@@ -1,0 +1,13 @@
+{
+  "domain": "haptique_extender",
+  "name": "Haptique Extender",
+  "codeowners": ["@daangel27"],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/daangel27/haptique_extender",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/daangel27/haptique_extender/issues",
+  "requirements": ["aiohttp>=3.8.0"],
+  "version": "1.2.0",
+  "zeroconf": ["_http._tcp.local."]
+}

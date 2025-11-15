@@ -1,0 +1,35 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Add a Haptique Extender",
+        "description": "Enter the IP address and authentication token for your Haptique Extender device.\n\n**How to get your token:**\n1. Open the Haptique Extender app on your smartphone\n2. Connect to your device\n3. The token will be automatically copied to your clipboard",
+        "data": {
+          "host": "IP Address",
+          "token": "Authentication Token",
+          "name": "Name (optional)"
+        }
+      },
+      "discovery_confirm": {
+        "title": "Confirm discovered device",
+        "description": "A Haptique Extender device has been discovered:\n\n**Name**: {name}\n**IP Address**: {host}\n**Model**: {model}\n**Firmware**: {fw}\n\nPlease enter the authentication token to complete the setup.\n\n**How to get your token:**\n1. Open the Haptique Extender app on your smartphone\n2. Connect to your device\n3. The token will be automatically copied to your clipboard",
+        "data": {
+          "token": "Authentication Token"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Unable to connect to the device",
+      "invalid_device": "Invalid device (MAC address missing)",
+      "invalid_token": "Invalid authentication token",
+      "token_required": "Authentication token is required",
+      "unknown": "Unknown error"
+    },
+    "abort": {
+      "already_configured": "This device is already configured",
+      "not_haptique_device": "This device is not a Haptique Extender",
+      "no_mac_address": "Unable to retrieve MAC address",
+      "cannot_connect": "Unable to connect to the device"
+    }
+  }
+}
