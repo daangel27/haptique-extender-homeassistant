@@ -1,0 +1,35 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Ajouter un Haptique Extender",
+        "description": "Entrez l'adresse IP et le token d'authentification de votre appareil Haptique Extender.\n\n**Comment obtenir votre token :**\n1. Ouvrez l'application Haptique Extender sur votre smartphone\n2. Connectez-vous à votre appareil\n3. Le token sera copié automatiquement dans votre presse-papiers",
+        "data": {
+          "host": "Adresse IP",
+          "token": "Token d'authentification",
+          "name": "Nom (optionnel)"
+        }
+      },
+      "discovery_confirm": {
+        "title": "Confirmer l'ajout de l'appareil découvert",
+        "description": "Un appareil Haptique Extender a été découvert :\n\n**Nom**: {name}\n**Adresse IP**: {host}\n**Modèle**: {model}\n**Version**: {fw}\n\nVeuillez entrer le token d'authentification pour compléter la configuration.\n\n**Comment obtenir votre token :**\n1. Ouvrez l'application Haptique Extender sur votre smartphone\n2. Connectez-vous à votre appareil\n3. Le token sera copié automatiquement dans votre presse-papiers",
+        "data": {
+          "token": "Token d'authentification"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Impossible de se connecter à l'appareil",
+      "invalid_device": "Appareil invalide (adresse MAC manquante)",
+      "invalid_token": "Token d'authentification invalide",
+      "token_required": "Le token d'authentification est requis",
+      "unknown": "Erreur inconnue"
+    },
+    "abort": {
+      "already_configured": "Cet appareil est déjà configuré",
+      "not_haptique_device": "Cet appareil n'est pas un Haptique Extender",
+      "no_mac_address": "Impossible de récupérer l'adresse MAC",
+      "cannot_connect": "Impossible de se connecter à l'appareil"
+    }
+  }
+}
