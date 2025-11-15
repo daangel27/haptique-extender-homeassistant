@@ -84,8 +84,8 @@ class HaptiqueCoordinator(DataUpdateCoordinator):
     async def _learning_poll_loop(self) -> None:
         """Poll for new IR codes while in learning mode."""
         max_timeout = 30  # 30 seconds total timeout
-        check_interval = 2  # Check every 2 seconds (pas 1s)
-        initial_delay = 3  # Attendre 3s avant le premier check
+        check_interval = 2  # Check every 2 seconds
+        initial_delay = 3  # Wait 3s before first check
         
         try:
             # Récupérer le hash initial AVANT d'attendre
@@ -174,32 +174,27 @@ class HaptiqueCoordinator(DataUpdateCoordinator):
             ir_db: IRDatabase = self.hass.data[DOMAIN]["ir_database"]
             
             success = ir_db.add_command(
-                device_id=learning_context["device_id"],
+                device_name=learning_context["device_name"],
                 command_name=learning_context["command_name"],
                 freq_khz=ir_data.get("freq_khz", 38),
                 duty=33,
                 repeat=1,
                 raw_data=ir_data.get("combined", []),
-                command_label=learning_context.get(
-                    "command_label", learning_context["command_name"]
-                ),
             )
             
             if success:
                 _LOGGER.info(
                     "Command '%s' saved to database for device '%s'",
                     learning_context["command_name"],
-                    learning_context["device_id"],
+                    learning_context["device_name"],
                 )
                 
                 # Fire success event (notification handled by automation)
                 self.hass.bus.async_fire(
                     "haptique_command_learned",
                     {
-                        "device_id": learning_context["device_id"],
                         "device_name": learning_context["device_name"],
                         "command_name": learning_context["command_name"],
-                        "command_label": learning_context.get("command_label", learning_context["command_name"]),
                     }
                 )
                 
