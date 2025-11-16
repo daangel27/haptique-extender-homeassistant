@@ -15,6 +15,10 @@ automation:
     trigger:
       - platform: event
         event_type: haptique_learning_activated
+    condition:
+      - condition: state
+        entity_id: input_boolean.haptique_notify_learning_enabled
+        state: "on"
     action:
       - service: persistent_notification.create
         data:
@@ -36,6 +40,10 @@ automation:
     trigger:
       - platform: event
         event_type: haptique_learning_timeout
+    condition:
+      - condition: state
+        entity_id: input_boolean.haptique_notify_learning_enabled
+        state: "on"
     action:
       - service: persistent_notification.create
         data:
@@ -59,6 +67,10 @@ automation:
     trigger:
       - platform: event
         event_type: haptique_command_learned
+    condition:
+      - condition: state
+        entity_id: input_boolean.haptique_notify_learning_enabled
+        state: "on"
     action:
       - service: persistent_notification.create
         data:
@@ -80,6 +92,10 @@ automation:
     trigger:
       - platform: event
         event_type: haptique_ir_captured_manual
+    condition:
+      - condition: state
+        entity_id: input_boolean.haptique_notify_learning_enabled
+        state: "on"
     action:
       - service: persistent_notification.create
         data:
@@ -106,6 +122,10 @@ automation:
     trigger:
       - platform: event
         event_type: haptique_learning_error
+    condition:
+      - condition: state
+        entity_id: input_boolean.haptique_notify_learning_enabled
+        state: "on"
     action:
       - service: persistent_notification.create
         data:
@@ -131,6 +151,10 @@ automation:
     trigger:
       - platform: event
         event_type: haptique_command_sent
+    condition:
+      - condition: state
+        entity_id: input_boolean.haptique_notify_send_enabled
+        state: "on"
     action:
       - service: persistent_notification.create
         data:
@@ -153,6 +177,10 @@ automation:
     trigger:
       - platform: event
         event_type: haptique_command_error
+    condition:
+      - condition: state
+        entity_id: input_boolean.haptique_notify_send_enabled
+        state: "on"
     action:
       - service: persistent_notification.create
         data:
@@ -181,6 +209,10 @@ automation:
     trigger:
       - platform: event
         event_type: haptique_command_not_found
+    condition:
+      - condition: state
+        entity_id: input_boolean.haptique_notify_send_enabled
+        state: "on"
     action:
       - service: persistent_notification.create
         data:
@@ -307,6 +339,10 @@ automation:
         to: "off"
         for:
           seconds: 30
+    condition:
+      - condition: state
+        entity_id: input_boolean.haptique_notify_connection_enabled
+        state: "on"
     action:
       - service: persistent_notification.create
         data:
@@ -334,6 +370,9 @@ automation:
     condition:
       - condition: template
         value_template: "{{ trigger.from_state.state == 'off' }}"
+      - condition: state
+        entity_id: input_boolean.haptique_notify_connection_enabled
+        state: "on"
     action:
       - service: persistent_notification.create
         data:
