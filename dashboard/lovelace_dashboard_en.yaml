@@ -358,6 +358,48 @@ views:
                 entity: sensor.haptique_extender_ir_storage_usage
               - type: entity
                 entity: sensor.haptique_extender_ir_commands_stored
+  - type: sections
+    max_columns: 2
+    title: Settings
+    path: settings
+    icon: mdi:cog
+    sections:
+      - type: grid
+        cards:
+          - type: entities
+            title: 🔔 Notification Settings
+            entities:
+              - entity: input_boolean.haptique_notify_learning_enabled
+                name: Learning Notifications
+                icon: mdi:school
+              - entity: input_boolean.haptique_notify_send_enabled
+                name: Send Command Notifications
+                icon: mdi:send
+              - entity: input_boolean.haptique_notify_connection_enabled
+                name: Connection Notifications
+                icon: mdi:lan-connect
+            show_header_toggle: false
+          - type: markdown
+            title: 💡 About Notifications
+            content: |
+              ### Notification Types
+
+              **🎓 Learning Notifications:**
+              - Learning mode activated
+              - Command learned successfully
+              - Learning timeout
+              - Learning errors
+
+              **📤 Send Notifications:**
+              - Command sent successfully
+              - Command send errors
+              - Command not found
+
+              **🌐 Connection Notifications:**
+              - Connection lost
+              - Connection restored
+
+              Toggle the switches above to enable/disable each notification type.
   - title: Help
     icon: mdi:help-circle
     path: help

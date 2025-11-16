@@ -61,6 +61,22 @@ input_boolean:
     name: "IR Learning Mode Active"
     icon: mdi:school
     initial: off
+  
+  # ========== NOTIFICATION TOGGLES ==========
+  haptique_notify_learning_enabled:
+    name: "Learning Notifications"
+    icon: mdi:school
+    initial: true
+  
+  haptique_notify_send_enabled:
+    name: "Send Command Notifications"
+    icon: mdi:send
+    initial: true
+  
+  haptique_notify_connection_enabled:
+    name: "Connection Notifications"
+    icon: mdi:lan-connect
+    initial: true
 
 input_select:
   # ========== REPLAY SELECTORS ==========
