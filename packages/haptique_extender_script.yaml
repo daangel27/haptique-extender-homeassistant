@@ -1,0 +1,202 @@
+# Haptique Extender - SCRIPTS (Enhanced with New/Existing Logic)
+# Place this file in: /config/packages/haptique_extender_script.yaml
+
+script:
+  # ========== MAIN OPERATION SCRIPT ==========
+  haptique_execute_operation:
+    alias: "Haptique - Execute Operation"
+    description: "Execute operation based on mode selector with smart device/command selection"
+    sequence:
+      - choose:
+          # LEARN MODE
+          - conditions:
+              - condition: state
+                entity_id: input_select.haptique_operation_mode
+                state: "Learn"
+            sequence:
+              - service: haptique_extender.learn_ir_command
+                data:
+                  device_name: >
+                    {% if is_state('input_boolean.haptique_use_existing_device', 'on') %}
+                      {{ states('input_select.haptique_device_selector') }}
+                    {% else %}
+                      {{ states('input_text.haptique_device_name') }}
+                    {% endif %}
+                  command_name: >
+                    {% if is_state('input_boolean.haptique_use_existing_command', 'on') %}
+                      {{ states('input_select.haptique_command_selector') }}
+                    {% else %}
+                      {{ states('input_text.haptique_command_name') }}
+                    {% endif %}
+                  timeout: 30
+          
+          # SEND MODE
+          - conditions:
+              - condition: state
+                entity_id: input_select.haptique_operation_mode
+                state: "Send"
+            sequence:
+              - service: haptique_extender.send_ir_command
+                data:
+                  device_name: >
+                    {% if is_state('input_boolean.haptique_use_existing_device', 'on') %}
+                      {{ states('input_select.haptique_device_selector') }}
+                    {% else %}
+                      {{ states('input_text.haptique_device_name') }}
+                    {% endif %}
+                  command_name: >
+                    {% if is_state('input_boolean.haptique_use_existing_command', 'on') %}
+                      {{ states('input_select.haptique_command_selector') }}
+                    {% else %}
+                      {{ states('input_text.haptique_command_name') }}
+                    {% endif %}
+          
+          # DELETE COMMAND MODE
+          - conditions:
+              - condition: state
+                entity_id: input_select.haptique_operation_mode
+                state: "Delete Command"
+            sequence:
+              - service: haptique_extender.delete_ir_command
+                data:
+                  device_name: >
+                    {% if is_state('input_boolean.haptique_use_existing_device', 'on') %}
+                      {{ states('input_select.haptique_device_selector') }}
+                    {% else %}
+                      {{ states('input_text.haptique_device_name') }}
+                    {% endif %}
+                  command_name: >
+                    {% if is_state('input_boolean.haptique_use_existing_command', 'on') %}
+                      {{ states('input_select.haptique_command_selector') }}
+                    {% else %}
+                      {{ states('input_text.haptique_command_name') }}
+                    {% endif %}
+          
+          # DELETE DEVICE MODE
+          - conditions:
+              - condition: state
+                entity_id: input_select.haptique_operation_mode
+                state: "Delete Device"
+            sequence:
+              - service: haptique_extender.delete_ir_device
+                data:
+                  device_name: >
+                    {% if is_state('input_boolean.haptique_use_existing_device', 'on') %}
+                      {{ states('input_select.haptique_device_selector') }}
+                    {% else %}
+                      {{ states('input_text.haptique_device_name') }}
+                    {% endif %}
+          
+          # LIST DEVICE COMMANDS MODE
+          - conditions:
+              - condition: state
+                entity_id: input_select.haptique_operation_mode
+                state: "List Device Commands"
+            sequence:
+              - service: haptique_extender.list_device_commands
+                data:
+                  device_name: >
+                    {% if is_state('input_boolean.haptique_use_existing_device', 'on') %}
+                      {{ states('input_select.haptique_device_selector') }}
+                    {% else %}
+                      {{ states('input_text.haptique_device_name') }}
+                    {% endif %}
+    mode: single
+
+  # ========== REFRESH SCRIPTS ==========
+  haptique_refresh_device_list:
+    alias: "Haptique - Refresh Device List"
+    description: "Update device selector options from sensor"
+    sequence:
+      - service: input_select.set_options
+        target:
+          entity_id: input_select.haptique_device_selector
+        data:
+          options: >
+            {% set devices = state_attr('sensor.haptique_extender_database_ir_devices', 'device_names') %}
+            {% if devices is not none and devices | length > 0 %}
+              {{ devices }}
+            {% else %}
+              ["No device available"]
+            {% endif %}
+      
+      # Auto-select first device if available
+      - condition: template
+        value_template: >
+          {% set devices = state_attr('sensor.haptique_extender_database_ir_devices', 'device_names') %}
+          {{ devices is not none and devices | length > 0 }}
+      
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.haptique_device_selector
+        data:
+          option: >
+            {% set devices = state_attr('sensor.haptique_extender_database_ir_devices', 'device_names') %}
+            {{ devices[0] if devices is not none and devices | length > 0 else 'No device available' }}
+    mode: single
+
+  haptique_refresh_command_list:
+    alias: "Haptique - Refresh Command List"
+    description: "Update command selector options for selected device"
+    sequence:
+      # Update commands sensor for selected device
+      - service: haptique_extender.set_commands_device
+        data:
+          device_name: "{{ states('input_select.haptique_device_selector') }}"
+      
+      # Wait for sensor to update
+      - delay: "00:00:01"
+      
+      # Update selector options
+      - service: input_select.set_options
+        target:
+          entity_id: input_select.haptique_command_selector
+        data:
+          options: >
+            {% set commands = state_attr('sensor.haptique_extender_database_ir_commands', 'command_names') %}
+            {% if commands is not none and commands | length > 0 %}
+              {{ commands }}
+            {% else %}
+              ["No command available"]
+            {% endif %}
+      
+      # Auto-select first command if available
+      - condition: template
+        value_template: >
+          {% set commands = state_attr('sensor.haptique_extender_database_ir_commands', 'command_names') %}
+          {{ commands is not none and commands | length > 0 }}
+      
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.haptique_command_selector
+        data:
+          option: >
+            {% set commands = state_attr('sensor.haptique_extender_database_ir_commands', 'command_names') %}
+            {{ commands[0] if commands is not none and commands | length > 0 else 'No command available' }}
+    mode: single
+
+  haptique_refresh_all:
+    alias: "Haptique - Refresh All Lists"
+    description: "Refresh both device and command lists"
+    sequence:
+      - service: script.haptique_refresh_device_list
+      - delay: "00:00:01"
+      - service: script.haptique_refresh_command_list
+    mode: single
+
+  # ========== UTILITY SCRIPTS ==========
+  haptique_clear_learn_helpers:
+    alias: "Haptique - Clear Learn Helpers"
+    description: "Clear learning input fields"
+    sequence:
+      - service: input_text.set_value
+        target:
+          entity_id: input_text.haptique_device_name
+        data:
+          value: ""
+      - service: input_text.set_value
+        target:
+          entity_id: input_text.haptique_command_name
+        data:
+          value: ""
+    mode: single

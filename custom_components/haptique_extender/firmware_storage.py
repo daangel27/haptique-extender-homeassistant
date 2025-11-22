@@ -40,7 +40,15 @@ class FirmwareIRStorage:
                 if resp.status == 401:
                     raise Exception("Authentication failed")
                 if resp.status != 200:
-                    raise Exception(f"HTTP {resp.status}")
+                    # Try to get error details from response
+                    try:
+                        error_data = await resp.json()
+                        error_msg = error_data.get("error", error_data.get("message", "Unknown error"))
+                        raise Exception(f"HTTP {resp.status}: {error_msg}")
+                    except:
+                        # If JSON parsing fails, get text response
+                        error_text = await resp.text()
+                        raise Exception(f"HTTP {resp.status}: {error_text[:200]}")
                 return await resp.json()
         except aiohttp.ClientError as err:
             raise Exception(f"Request failed: {err}") from err
@@ -48,7 +56,32 @@ class FirmwareIRStorage:
     async def save_last_ir(self, name: str) -> bool:
         """Save the last received IR code with a name."""
         try:
-            result = await self._request("POST", "/api/ir/save", {"name": name})
+            payload = {"name": name}
+            
+            # Debug: Log complete request details
+            _LOGGER.debug(
+                "=== FIRMWARE SAVE REQUEST ===\n"
+                "URL: %s/api/ir/save\n"
+                "Method: POST\n"
+                "Headers: Authorization: Bearer %s...\n"
+                "Payload: %s\n"
+                "=============================",
+                self.base_url,
+                self.token[:20] if self.token else "None",
+                payload
+            )
+            
+            result = await self._request("POST", "/api/ir/save", payload)
+            
+            # Debug: Log response
+            _LOGGER.debug(
+                "=== FIRMWARE SAVE RESPONSE ===\n"
+                "Status: Success\n"
+                "Response: %s\n"
+                "==============================",
+                result
+            )
+            
             return result.get("status") == "saved"
         except Exception as err:
             _LOGGER.error("Failed to save IR command '%s': %s", name, err)

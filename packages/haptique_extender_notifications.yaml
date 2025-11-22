@@ -1,0 +1,339 @@
+# Haptique Extender - NOTIFICATIONS (Unified)
+# Place this file in: /config/packages/haptique_extender_notifications.yaml
+
+automation:
+  # ========== UNIFIED NOTIFICATION AUTOMATION ==========
+  - id: haptique_unified_notifications
+    alias: "Haptique - Unified Notifications"
+    description: "Single automation handling all operation notifications"
+    trigger:
+      - platform: event
+        event_type: haptique_operation
+      - platform: event
+        event_type: haptique_ir_captured
+    condition:
+      - condition: state
+        entity_id: input_boolean.haptique_notify_enabled
+        state: "on"
+    action:
+      - choose:
+          # ========== LEARN OPERATIONS ==========
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.event.event_type == 'haptique_operation' and trigger.event.data.operation == 'learn' }}"
+            sequence:
+              - choose:
+                  # Learn Started
+                  - conditions:
+                      - condition: template
+                        value_template: "{{ trigger.event.data.status == 'started' }}"
+                    sequence:
+                      - service: persistent_notification.create
+                        data:
+                          title: "🎓 Learning Mode Activated"
+                          message: >
+                            **Device:** {{ trigger.event.data.device_name }}
+                            **Command:** {{ trigger.event.data.command_name }}
+                            
+                            👉 Point your remote control at the IR sensor and press the button.
+                            
+                            ⏱️ Timeout: {{ trigger.event.data.data.timeout }}s
+                          notification_id: "haptique_learn"
+                  
+                  # Learn Success
+                  - conditions:
+                      - condition: template
+                        value_template: "{{ trigger.event.data.status == 'success' }}"
+                    sequence:
+                      - service: persistent_notification.create
+                        data:
+                          title: "✅ Command Learned"
+                          message: >
+                            **Device:** {{ trigger.event.data.device_name }}
+                            **Command:** {{ trigger.event.data.command_name }}
+                            
+                            📊 Frequency: {{ trigger.event.data.data.freq_khz }} kHz
+                            📊 Values: {{ trigger.event.data.data.count }}
+                            📊 Frames: {{ trigger.event.data.data.frames }}
+                            
+                            ✅ Saved to database!
+                          notification_id: "haptique_learn"
+                  
+                  # Learn Timeout
+                  - conditions:
+                      - condition: template
+                        value_template: "{{ trigger.event.data.status == 'timeout' }}"
+                    sequence:
+                      - service: persistent_notification.create
+                        data:
+                          title: "⏱️ Learning Timeout"
+                          message: >
+                            No IR code captured after 30 seconds.
+                            
+                            💡 Make sure to:
+                            - Point remote at sensor
+                            - Press button firmly
+                            - Be within 2 meters
+                          notification_id: "haptique_learn"
+                  
+                  # Learn Error
+                  - conditions:
+                      - condition: template
+                        value_template: "{{ trigger.event.data.status == 'error' }}"
+                    sequence:
+                      - service: persistent_notification.create
+                        data:
+                          title: "❌ Learning Error"
+                          message: >
+                            **Error:** {{ trigger.event.data.error }}
+                            
+                            **Device:** {{ trigger.event.data.device_name }}
+                            **Command:** {{ trigger.event.data.command_name }}
+                          notification_id: "haptique_learn"
+          
+          # ========== SEND OPERATIONS ==========
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.event.event_type == 'haptique_operation' and trigger.event.data.operation == 'send' }}"
+            sequence:
+              - choose:
+                  # Send Success
+                  - conditions:
+                      - condition: template
+                        value_template: "{{ trigger.event.data.status == 'success' }}"
+                    sequence:
+                      - service: persistent_notification.create
+                        data:
+                          title: "📤 Command Sent"
+                          message: >
+                            **Device:** {{ trigger.event.data.device_name }}
+                            **Command:** {{ trigger.event.data.command_name }}
+                            
+                            ✅ IR signal transmitted!
+                          notification_id: "haptique_send"
+                  
+                  # Send Error
+                  - conditions:
+                      - condition: template
+                        value_template: "{{ trigger.event.data.status == 'error' }}"
+                    sequence:
+                      - service: persistent_notification.create
+                        data:
+                          title: "❌ Send Error"
+                          message: >
+                            **Error:** {{ trigger.event.data.error }}
+                            
+                            **Device:** {{ trigger.event.data.device_name }}
+                            **Command:** {{ trigger.event.data.command_name }}
+                          notification_id: "haptique_send"
+          
+          # ========== DELETE OPERATIONS ==========
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.event.event_type == 'haptique_operation' and trigger.event.data.operation == 'delete' }}"
+            sequence:
+              - choose:
+                  # Delete Command Success
+                  - conditions:
+                      - condition: template
+                        value_template: "{{ trigger.event.data.status == 'success' and trigger.event.data.entity_type == 'command' }}"
+                    sequence:
+                      - service: persistent_notification.create
+                        data:
+                          title: "🗑️ Command Deleted"
+                          message: >
+                            **Device:** {{ trigger.event.data.device_name }}
+                            **Command:** {{ trigger.event.data.command_name }}
+                            
+                            ✅ Deleted from database
+                          notification_id: "haptique_delete"
+                  
+                  # Delete Device Success
+                  - conditions:
+                      - condition: template
+                        value_template: "{{ trigger.event.data.status == 'success' and trigger.event.data.entity_type == 'device' }}"
+                    sequence:
+                      - service: persistent_notification.create
+                        data:
+                          title: "🗑️ Device Deleted"
+                          message: >
+                            **Device:** {{ trigger.event.data.device_name }}
+                            **Commands deleted:** {{ trigger.event.data.data.command_count }}
+                            
+                            ✅ Removed from database
+                          notification_id: "haptique_delete"
+                  
+                  # Delete Error
+                  - conditions:
+                      - condition: template
+                        value_template: "{{ trigger.event.data.status == 'error' }}"
+                    sequence:
+                      - service: persistent_notification.create
+                        data:
+                          title: "❌ Delete Error"
+                          message: >
+                            **Error:** {{ trigger.event.data.error }}
+                            
+                            {% if trigger.event.data.entity_type == 'command' %}
+                            **Device:** {{ trigger.event.data.device_name }}
+                            **Command:** {{ trigger.event.data.command_name }}
+                            {% else %}
+                            **Device:** {{ trigger.event.data.device_name }}
+                            {% endif %}
+                          notification_id: "haptique_delete"
+          
+          # ========== SAVE TO FIRMWARE OPERATIONS ==========
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.event.event_type == 'haptique_operation' and trigger.event.data.operation == 'save_to_firmware' }}"
+            sequence:
+              - choose:
+                  # Save Success
+                  - conditions:
+                      - condition: template
+                        value_template: "{{ trigger.event.data.status == 'success' }}"
+                    sequence:
+                      - service: persistent_notification.create
+                        data:
+                          title: "💾 Saved to Firmware"
+                          message: >
+                            **Device:** {{ trigger.event.data.device_name }}
+                            **Command:** {{ trigger.event.data.command_name }}
+                            **Stored as:** {{ trigger.event.data.data.stored_name }}
+                            
+                            ✅ Command saved to device firmware!
+                          notification_id: "haptique_firmware"
+                  
+                  # Save Error
+                  - conditions:
+                      - condition: template
+                        value_template: "{{ trigger.event.data.status == 'error' }}"
+                    sequence:
+                      - service: persistent_notification.create
+                        data:
+                          title: "❌ Firmware Save Error"
+                          message: >
+                            **Error:** {{ trigger.event.data.error }}
+                            
+                            **Device:** {{ trigger.event.data.device_name }}
+                            **Command:** {{ trigger.event.data.command_name }}
+                          notification_id: "haptique_firmware"
+          
+          # ========== LIST COMMANDS OPERATIONS ==========
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.event.event_type == 'haptique_operation' and trigger.event.data.operation == 'list_commands' }}"
+            sequence:
+              - choose:
+                  # List Success
+                  - conditions:
+                      - condition: template
+                        value_template: "{{ trigger.event.data.status == 'success' }}"
+                    sequence:
+                      - service: persistent_notification.create
+                        data:
+                          title: "📋 Device Commands"
+                          message: >
+                            **Device:** {{ trigger.event.data.device_name }}
+                            **Command count:** {{ trigger.event.data.data.command_count }}
+                            
+                            {% if trigger.event.data.data.commands | length > 0 %}
+                            **Commands:**
+                            {% for cmd in trigger.event.data.data.commands %}
+                            - {{ cmd.name }} ({{ cmd.freq_khz }} kHz)
+                            {% endfor %}
+                            {% endif %}
+                          notification_id: "haptique_list"
+                  
+                  # List Error (no commands)
+                  - conditions:
+                      - condition: template
+                        value_template: "{{ trigger.event.data.status == 'error' }}"
+                    sequence:
+                      - service: persistent_notification.create
+                        data:
+                          title: "ℹ️ No Commands Found"
+                          message: >
+                            **Device:** {{ trigger.event.data.device_name }}
+                            
+                            This device has no saved commands yet.
+                            
+                            💡 Use "Learn" mode to add commands.
+                          notification_id: "haptique_list"
+          
+          # ========== MANUAL IR CAPTURE ==========
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.event.event_type == 'haptique_ir_captured' }}"
+            sequence:
+              - service: persistent_notification.create
+                data:
+                  title: "📡 IR Code Captured"
+                  message: >
+                    IR code captured manually!
+                    
+                    📊 **Information:**
+                    - Count: {{ trigger.event.data.count }} values
+                    - Frequency: {{ trigger.event.data.freq_khz }} kHz
+                    - Frames: {{ trigger.event.data.frames }}
+                    
+                    💡 Use `learn_ir_command` service to save it.
+                  notification_id: "haptique_capture"
+    mode: single
+
+  # ========== CONNECTION NOTIFICATIONS ==========
+  - id: haptique_connection_lost
+    alias: "Haptique - Connection Lost"
+    description: "Notification when connection is lost"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.haptique_extender_wifi_connected
+        to: "unavailable"
+        for:
+          seconds: 10
+    condition:
+      - condition: state
+        entity_id: input_boolean.haptique_notify_enabled
+        state: "on"
+    action:
+      - service: persistent_notification.create
+        data:
+          title: "⚠️ Connection Lost"
+          message: >
+            Connection to Haptique Extender has been lost.
+            
+            **Check:**
+            - Device powered on?
+            - WiFi connection active?
+            - IP address changed?
+          notification_id: "haptique_connection"
+    mode: single
+
+  - id: haptique_connection_restored
+    alias: "Haptique - Connection Restored"
+    description: "Notification when connection is restored"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.haptique_extender_wifi_connected
+        to: "on"
+    condition:
+      - condition: template
+        value_template: "{{ trigger.from_state.state == 'unavailable' }}"
+      - condition: state
+        entity_id: input_boolean.haptique_notify_enabled
+        state: "on"
+    action:
+      - service: persistent_notification.create
+        data:
+          title: "✅ Connection Restored"
+          message: >
+            Connection to Haptique Extender restored!
+            
+            **Info:**
+            - IP: {{ states('sensor.haptique_extender_ip_address') }}
+            - Signal: {{ states('sensor.haptique_extender_wifi_signal') }} dBm
+          notification_id: "haptique_connection"
+      - service: persistent_notification.dismiss
+        data:
+          notification_id: "haptique_connection_lost"
+    mode: single

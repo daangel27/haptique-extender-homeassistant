@@ -42,8 +42,6 @@ send_ir_code:
           min: 1
           max: 10
 
-# IR DATABASE SERVICES
-
 learn_ir_command:
   name: Learn IR Command
   description: Learn and save an IR command to the database
@@ -92,28 +90,6 @@ send_ir_command:
       selector:
         text:
 
-list_ir_devices:
-  name: List IR Devices
-  description: List all devices in the IR database
-  response:
-    type: dict
-    description: List of devices with their details
-
-list_ir_commands:
-  name: List IR Commands
-  description: List all commands for a specific device
-  fields:
-    device_name:
-      name: Device Name
-      description: Device name
-      required: true
-      example: "TV Samsung Living Room"
-      selector:
-        text:
-  response:
-    type: dict
-    description: List of commands for the device
-
 delete_ir_command:
   name: Delete IR Command
   description: Delete a command from the database
@@ -140,6 +116,30 @@ delete_ir_device:
     device_name:
       name: Device Name
       description: Device name to delete
+      required: true
+      example: "TV Samsung Living Room"
+      selector:
+        text:
+
+set_commands_device:
+  name: Set Commands Device
+  description: Update the IR Commands sensor to show commands for a specific device
+  fields:
+    device_name:
+      name: Device Name
+      description: Device name to display commands for
+      required: true
+      example: "TV Samsung Living Room"
+      selector:
+        text:
+
+list_device_commands:
+  name: List Device Commands
+  description: List all commands for a specific device (fires haptique_operation event with results)
+  fields:
+    device_name:
+      name: Device Name
+      description: Device name to list commands for
       required: true
       example: "TV Samsung Living Room"
       selector:
