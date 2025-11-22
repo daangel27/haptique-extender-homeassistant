@@ -1,0 +1,440 @@
+title: Haptique Manager
+icon: mdi:remote
+views:
+  - type: sections
+    title: Control
+    icon: mdi:remote
+    path: control
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: 🎮 Unified Control Panel
+          - type: markdown
+            content: >
+              ### Control Panel
+
+              **Modes:**
+
+              - **Learn:** Capture new IR commands
+
+              - **Send:** Transmit saved commands
+
+              - **Delete Command:** Remove a command
+
+              - **Delete Device:** Remove device + all commands
+
+              - **List Device Commands:** Show all commands for a      device
+
+              **Input Methods:**
+
+              - Toggle "Use Existing Device" to select from database   or enter
+              new name
+
+              - Toggle "Use Existing Command" to select from           database
+              or enter new name
+
+              - Flexible: mix new device with existing command or      vice
+              versa
+          - type: entities
+            entities:
+              - entity: input_select.haptique_operation_mode
+                name: Operation Mode
+            show_header_toggle: false
+          - type: entities
+            title: 📝 Device Selection
+            entities:
+              - entity: input_boolean.haptique_use_existing_device
+                name: Use Existing Device
+              - type: conditional
+                conditions:
+                  - entity: input_boolean.haptique_use_existing_device
+                    state: 'on'
+                row:
+                  entity: input_select.haptique_device_selector
+                  name: Select Device
+              - type: conditional
+                conditions:
+                  - entity: input_boolean.haptique_use_existing_device
+                    state: 'off'
+                row:
+                  entity: input_text.haptique_device_name
+                  name: New Device Name
+            show_header_toggle: false
+          - type: entities
+            title: 📋 Command Selection
+            entities:
+              - entity: input_boolean.haptique_use_existing_command
+                name: Use Existing Command
+              - type: conditional
+                conditions:
+                  - entity: input_boolean.haptique_use_existing_command
+                    state: 'on'
+                row:
+                  entity: input_select.haptique_command_selector
+                  name: Select Command
+              - type: conditional
+                conditions:
+                  - entity: input_boolean.haptique_use_existing_command
+                    state: 'off'
+                row:
+                  entity: input_text.haptique_command_name
+                  name: New Command Name
+            show_header_toggle: false
+          - type: horizontal-stack
+            cards:
+              - type: button
+                name: Execute
+                icon: mdi:play-circle
+                tap_action:
+                  action: call-service
+                  service: script.haptique_execute_operation
+                icon_height: 50px
+                confirmation:
+                  text: >
+                    {% set mode = states('input_select.haptique_operation_mode')
+                    %} {% if mode in ['Delete Command', 'Delete Device'] %} Are
+                    you sure you want to delete? {% endif %}
+              - type: button
+                name: Clear Fields
+                icon: mdi:eraser
+                tap_action:
+                  action: call-service
+                  service: script.haptique_clear_learn_helpers
+                icon_height: 50px
+              - type: button
+                name: 🔄 Refresh
+                icon: mdi:refresh
+                tap_action:
+                  action: call-service
+                  service: script.haptique_refresh_all
+                icon_height: 50px
+      - type: grid
+        cards:
+          - type: heading
+            heading: 💡 Current Mode Help
+          - type: markdown
+            content: >2
+                {% set mode = states('input_select.haptique_operation_mode') %}
+                {% if mode == 'Learn' %}
+                ### 🎓 Learn Mode
+
+              🧩 **Steps:**
+                1. Choose device: Toggle "Use Existing Device" ON to select from list, or OFF to enter new name  
+                2. Choose command: Toggle "Use Existing Command" ON to select from list, or OFF to enter new name  
+                3. Click Execute  
+                4. Point remote at sensor and press button  
+                5. Command saved automatically!
+
+                **Tips:**
+                - You can add a new command to an existing device (Device = ON, Command = OFF)  
+                - Point directly at IR receiver  
+                - Press button firmly
+
+              {% elif mode == 'Send' %}  ### 📤 Send Mode
+
+              🧩 **Steps:**
+                1. Toggle device selection: ON=select from list,          OFF=enter manually
+                2. Toggle command selection: ON=select from list,         OFF=enter manually
+                3. Click Execute
+                
+              **Notes:**  - Usually you'll want both toggles ON
+              to                 select existing device+command -
+              Command               list auto-updates when device changes 
+
+              {% elif mode == 'Delete Command' %}  ### 🗑️ Delete Command Mode
+
+              🧩 **Steps:**
+                1. Toggle device selection ON and select device
+                2. Toggle command selection ON and select command
+                3. Click Execute
+                4. Confirm deletion
+
+              ⚠️ **Warning:** This action cannot be undone! 
+
+              {% elif mode == 'Delete Device' %}  ### 🗑️ Delete Device Mode
+
+              🧩 **Steps:**
+                1. Toggle device selection ON and select device
+                2. Click Execute
+                3. Confirm deletion
+
+              ⚠️ **Warning:**   - Deletes ALL commands for this device  - This
+              action cannot be undone! 
+
+              {% elif mode == 'List Device Commands' %}  ### 📋 List Device
+              Commands Mode
+
+              🧩 **Steps:**
+
+              1. Toggle device selection and choose device
+
+              2. Click Execute
+
+              3. Check notifications for command list
+
+
+              **Notes:**  - Results appear in a notification 
+              -                    Shows all commands with frequency info
+
+              {% endif %}
+      - type: grid
+        cards:
+          - type: heading
+            heading: 📊 Last Learned Code
+          - type: entities
+            entities:
+              - entity: sensor.haptique_extender_last_learn_ir_code
+                name: Timestamp
+              - type: attribute
+                entity: sensor.haptique_extender_last_learn_ir_code
+                attribute: count
+                name: Values Count
+              - type: attribute
+                entity: sensor.haptique_extender_last_learn_ir_code
+                attribute: freq_khz
+                name: Frequency (kHz)
+              - type: attribute
+                entity: sensor.haptique_extender_last_learn_ir_code
+                attribute: frames
+                name: Frames
+            show_header_toggle: false
+  - type: sections
+    title: Database
+    icon: mdi:database
+    path: database
+    max_columns: 2
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: 📊 Database Statistics
+          - type: entities
+            entities:
+              - entity: sensor.haptique_extender_database_ir_devices
+                name: Total Devices
+                icon: mdi:devices
+              - entity: sensor.haptique_extender_database_ir_commands
+                name: Commands (selected device)
+                icon: mdi:code-braces
+              - entity: sensor.haptique_extender_hub_ir_commands_stored
+                name: Hub Commands
+                icon: mdi:chip
+              - entity: sensor.haptique_extender_hub_ir_storage_usage
+                name: Hub Storage Usage
+            show_header_toggle: false
+      - type: grid
+        cards:
+          - type: heading
+            heading: 📋 Device List
+          - type: markdown
+            content: >
+              {% set devices =
+              state_attr('sensor.haptique_extender_database_ir_devices',
+              'devices') %}  {% if devices is not none and devices | length > 0
+              %}  **{{ devices | length }} device(s) in database:**
+
+              {% for device in devices %}  **{{ device.name }}** - Commands: {{
+              device.command_count }} - Created: {{ device.created_at[:10] }}
+
+              {% endfor %}
+
+              ---
+
+              💡 **Tip:** Use "List Device Commands" mode to see commands for a
+              specific device  {% else %}  *No devices found in database*
+
+              💡 Use "Learn" mode to add your first device!  {% endif %}
+  - type: sections
+    title: Sensors
+    icon: mdi:monitor-eye
+    path: sensors
+    max_columns: 2
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: 🌐 Network & Device
+          - type: entities
+            entities:
+              - entity: binary_sensor.haptique_extender_wifi_connected
+              - entity: sensor.haptique_extender_wifi_signal
+              - entity: sensor.haptique_extender_wifi_ssid
+              - entity: sensor.haptique_extender_ip_address
+              - entity: sensor.haptique_extender_mac_address
+              - entity: sensor.haptique_extender_firmware_version
+      - type: grid
+        cards:
+          - type: heading
+            heading: 💾 Storage & Learning
+          - type: entities
+            entities:
+              - entity: sensor.haptique_extender_last_learn_ir_code
+              - entity: sensor.haptique_extender_hub_ir_commands_stored
+              - entity: sensor.haptique_extender_hub_ir_storage_max
+              - entity: sensor.haptique_extender_hub_ir_storage_usage
+  - type: sections
+    title: Settings
+    icon: mdi:cog
+    path: settings
+    max_columns: 1
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: 🔔 Notifications
+          - type: entities
+            entities:
+              - entity: input_boolean.haptique_notify_enabled
+                name: Enable All Notifications
+            show_header_toggle: false
+          - type: markdown
+            content: >
+              ### Notification Types
+
+              When enabled, you'll receive notifications for:
+
+              **🎓 Learning:** - Mode activated - Command learned -
+              Timeout/errors
+
+              **📤 Send:** - Command sent successfully - Send errors
+
+              **🗑️ Delete:** - Command/device deleted - Delete errors
+
+              **📋 List Commands:** - Command list displayed - No commands found
+              info
+
+              **🌐 Connection:** - Connection lost/restored
+  - type: sections
+    title: Help
+    icon: mdi:help-circle
+    path: help
+    max_columns: 1
+    sections:
+      - type: grid
+        cards:
+          - type: markdown
+            title: 📚 Service Examples
+            content: |
+              ### Learn IR Command
+              ```yaml
+              service: haptique_extender.learn_ir_command
+              data:
+                device_name: "Samsung TV"
+                command_name: "power"
+                timeout: 30
+              ```
+
+              ### Send IR Command
+              ```yaml
+              service: haptique_extender.send_ir_command
+              data:
+                device_name: "Samsung TV"
+                command_name: "power"
+              ```
+
+              ### List Device Commands
+              ```yaml
+              service: haptique_extender.list_device_commands
+              data:
+                device_name: "Samsung TV"
+              ```
+
+              ### Delete Command
+              ```yaml
+              service: haptique_extender.delete_ir_command
+              data:
+                device_name: "Samsung TV"
+                command_name: "power"
+              ```
+
+              ### Delete Device
+              ```yaml
+              service: haptique_extender.delete_ir_device
+              data:
+                device_name: "Samsung TV"
+              ```
+
+              ### Update Commands Sensor
+              ```yaml
+              service: haptique_extender.set_commands_device
+              data:
+                device_name: "Samsung TV"
+              ```
+          - type: markdown
+            title: 💡 Tips & Features
+            content: |
+              ### New/Existing Toggle System
+              The control panel uses toggles to switch between:
+              - **Device:** Select existing OR enter new name
+              - **Command:** Select existing OR enter new name
+
+              This allows maximum flexibility:
+              - Add new command to existing device
+              - Use existing device with new command
+              - Create entirely new device
+              - Work with all existing items
+
+              ### Database Location
+              `/config/haptique_ir_database.json`
+
+              **⚠️ Remember to backup this file regularly!**
+
+              ### Auto-Refresh
+              Lists automatically refresh:
+              - ✅ On startup
+              - ✅ After learning
+              - ✅ After deletion
+              - ✅ When changing device
+
+              ### Unified Events
+              The integration uses a single event system:
+              - `haptique_operation` - All operations
+              - `haptique_ir_captured` - Manual IR capture
+
+              ### Simplified Architecture
+              - **1 notification toggle**
+              - **Single unified control panel**
+              - **Flexible toggle system (new/existing)**
+              - **Smart device/command handling**
+          - type: markdown
+            title: 🎯 Quick Workflows
+            content: |
+              ### Learning New Device
+              1. Set mode to "Learn"
+              2. Toggle "Use Existing Device" OFF
+              3. Enter new device name
+              4. Toggle "Use Existing Command" OFF
+              5. Enter command name (e.g., "power")
+              6. Click Execute
+              7. Point remote and press
+              8. Repeat for all buttons (toggle command OFF for each new one)
+
+              ### Adding Command to Existing Device
+              1. Set mode to "Learn"
+              2. Toggle "Use Existing Device" ON
+              3. Select device from dropdown
+              4. Toggle "Use Existing Command" OFF
+              5. Enter new command name
+              6. Click Execute
+              7. Point remote and press
+
+              ### Using Saved Commands
+              1. Set mode to "Send"
+              2. Toggle "Use Existing Device" ON
+              3. Select device from dropdown
+              4. Toggle "Use Existing Command" ON
+              5. Select command from dropdown
+              6. Click Execute
+
+              ### Managing Database
+              1. Use "List Device Commands" to review
+              2. Use "Delete Command" to remove unwanted
+              3. Use "Delete Device" to clean up
+
+              ### Checking Commands
+              1. Set mode to "List Device Commands"
+              2. Toggle device ON and select
+              3. Click Execute
+              4. View notification with full list

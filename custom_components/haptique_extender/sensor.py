@@ -1,4 +1,4 @@
-"""Sensor platform for Haptique Extender - Version 2.0."""
+"""Sensor platform for Haptique Extender - With DB Sensors."""
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -27,25 +27,34 @@ from .coordinator import HaptiqueCoordinator
 class HaptiqueSensorEntityDescription(SensorEntityDescription):
     """Describes Haptique sensor entity."""
 
-    value_fn: Callable[[dict[str, Any]], StateType] = None
-    attr_fn: Callable[[dict[str, Any]], dict[str, Any]] = None
+    value_fn: Callable[[dict[str, Any]], StateType] | None = None
 
 
 SENSOR_TYPES: tuple[HaptiqueSensorEntityDescription, ...] = (
     # Device Info Sensors
     HaptiqueSensorEntityDescription(
-        key="fw_version",
+        key="firmware_version",
         name="Firmware Version",
         icon="mdi:chip",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda data: data.get("status", {}).get("fw_ver"),
+        value_fn=lambda data: data.get("status", {}).get("fw_ver", "unknown"),
+    ),
+    HaptiqueSensorEntityDescription(
+        key="hostname",
+        name="Hostname",
+        icon="mdi:network",
+        value_fn=lambda data: data.get("status", {}).get("hostname", "unknown"),
     ),
     HaptiqueSensorEntityDescription(
         key="mac_address",
         name="MAC Address",
-        icon="mdi:network",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda data: data.get("status", {}).get("mac"),
+        icon="mdi:identifier",
+        value_fn=lambda data: data.get("status", {}).get("mac", "unknown"),
+    ),
+    HaptiqueSensorEntityDescription(
+        key="sta_ip",
+        name="IP Address",
+        icon="mdi:ip-network",
+        value_fn=lambda data: data.get("status", {}).get("sta_ip", "unknown"),
     ),
     
     # WiFi Sensors
@@ -53,101 +62,52 @@ SENSOR_TYPES: tuple[HaptiqueSensorEntityDescription, ...] = (
         key="wifi_ssid",
         name="WiFi SSID",
         icon="mdi:wifi",
-        value_fn=lambda data: data.get("status", {}).get("sta_ssid"),
+        value_fn=lambda data: data.get("status", {}).get("sta_ssid", "unknown"),
     ),
     HaptiqueSensorEntityDescription(
-        key="wifi_rssi",
+        key="wifi_signal",
         name="WiFi Signal",
-        device_class=SensorDeviceClass.SIGNAL_STRENGTH,
+        icon="mdi:wifi-strength-2",
         native_unit_of_measurement=SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
+        device_class=SensorDeviceClass.SIGNAL_STRENGTH,
         state_class=SensorStateClass.MEASUREMENT,
         value_fn=lambda data: data.get("wifi", {}).get("sta", {}).get("rssi"),
     ),
-    HaptiqueSensorEntityDescription(
-        key="wifi_ip",
-        name="WiFi IP",
-        icon="mdi:ip",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda data: data.get("wifi", {}).get("sta", {}).get("ip"),
-    ),
     
-    # IR RX Info Sensors
-    HaptiqueSensorEntityDescription(
-        key="ir_rx_count",
-        name="IR RX Count",
-        icon="mdi:counter",
-        state_class=SensorStateClass.TOTAL_INCREASING,
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda data: data.get("ir_rx_info", {}).get("rx_count", 0),
-    ),
-    HaptiqueSensorEntityDescription(
-        key="ir_last_freq",
-        name="IR Last Frequency",
-        icon="mdi:sine-wave",
-        native_unit_of_measurement="kHz",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda data: data.get("ir_rx_info", {}).get("last_freq_khz"),
-    ),
-    
-    # Storage Info Sensors
+    # Hub Storage Info Sensors (firmware)
     HaptiqueSensorEntityDescription(
         key="ir_commands_stored",
-        name="IR Commands Stored",
+        name="Hub IR Commands Stored",
         icon="mdi:database",
         state_class=SensorStateClass.MEASUREMENT,
-        entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda data: data.get("storage_info", {}).get("ir_count", 0),
     ),
     HaptiqueSensorEntityDescription(
         key="ir_storage_max",
-        name="IR Storage Max",
+        name="Hub IR Storage Max",
         icon="mdi:database-settings",
-        entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda data: data.get("storage_info", {}).get("ir_max", 50),
     ),
     HaptiqueSensorEntityDescription(
         key="ir_storage_percent",
-        name="IR Storage Usage",
+        name="Hub IR Storage Usage",
         icon="mdi:database-check",
         native_unit_of_measurement="%",
         state_class=SensorStateClass.MEASUREMENT,
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda data: int(
-            (data.get("storage_info", {}).get("ir_count", 0) 
-             / max(data.get("storage_info", {}).get("ir_max", 50), 1)) * 100
-        ) if data.get("storage_info", {}).get("ir_max") else 0,
+        value_fn=lambda data: (
+            round((data.get("storage_info", {}).get("ir_count", 0) / 
+                   data.get("storage_info", {}).get("ir_max", 50)) * 100, 1)
+            if data.get("storage_info", {}).get("ir_max", 50) > 0 else 0
+        ),
     ),
     
-    # Learning Mode Sensor
-    HaptiqueSensorEntityDescription(
-        key="learning_mode",
-        name="Learning Mode",
-        icon="mdi:school",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda data: "Active" if data.get("learning_mode") else "Inactive",
-    ),
-    
-    # Last Learn IR Code Sensor
+    # Last Learned IR Code Sensor
     HaptiqueSensorEntityDescription(
         key="last_learn_ir_code",
         name="Last Learn IR Code",
         icon="mdi:remote-tv",
         device_class=SensorDeviceClass.TIMESTAMP,
-        value_fn=lambda data: (
-            data.get("last_learn_ir_timestamp") 
-            if data.get("last_learn_ir_code") 
-            else None
-        ),
-        attr_fn=lambda data: (
-            {
-                "raw_data": data.get("last_learn_ir_code", {}).get("combined", []),
-                "freq_khz": data.get("last_learn_ir_code", {}).get("freq_khz"),
-                "frames": data.get("last_learn_ir_code", {}).get("frames"),
-                "count": len(data.get("last_learn_ir_code", {}).get("combined", [])),
-            }
-            if data.get("last_learn_ir_code")
-            else {}
-        ),
+        value_fn=lambda data: data.get("last_learn_ir_timestamp"),
     ),
 )
 
@@ -159,11 +119,16 @@ async def async_setup_entry(
 ) -> None:
     """Set up Haptique sensors."""
     coordinator: HaptiqueCoordinator = hass.data[DOMAIN][entry.entry_id]
-    
+
     entities = [
-        HaptiqueSensor(coordinator, entry, description) for description in SENSOR_TYPES
+        HaptiqueSensor(coordinator, entry, description)
+        for description in SENSOR_TYPES
     ]
     
+    # Add DB sensors
+    entities.append(HaptiqueDevicesSensor(coordinator, entry))
+    entities.append(HaptiqueCommandsSensor(coordinator, entry))
+
     async_add_entities(entities)
 
 
@@ -184,15 +149,13 @@ class HaptiqueSensor(CoordinatorEntity[HaptiqueCoordinator], SensorEntity):
         
         # Use hostname for entity naming
         hostname = coordinator.device_info.get("hostname", "haptique_extender")
-        # Clean hostname for entity_id (replace hyphens with underscores)
-        clean_hostname = hostname.replace("-", "_")
         
         self._attr_unique_id = f"{entry.entry_id}_{description.key}"
         self._attr_has_entity_name = True
         
         self._attr_device_info = {
             "identifiers": {(DOMAIN, coordinator.device_info["mac"])},
-            "name": hostname,  # Device name = hostname
+            "name": hostname,
             "manufacturer": "KINCONY",
             "model": "KC868-AG",
             "sw_version": coordinator.device_info["fw_ver"],
@@ -204,10 +167,132 @@ class HaptiqueSensor(CoordinatorEntity[HaptiqueCoordinator], SensorEntity):
         if self.entity_description.value_fn:
             return self.entity_description.value_fn(self.coordinator.data)
         return None
+    
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """Return extra state attributes for last_learn_ir_code sensor."""
+        if self.entity_description.key == "last_learn_ir_code":
+            last_ir_code = self.coordinator.data.get("last_learn_ir_code")
+            if last_ir_code:
+                return {
+                    "count": len(last_ir_code.get("combined", [])),
+                    "freq_khz": last_ir_code.get("freq_khz"),
+                    "frames": last_ir_code.get("frames", 1),
+                    "raw_data": last_ir_code.get("combined", []),
+                }
+        return None
+
+
+class HaptiqueDevicesSensor(CoordinatorEntity[HaptiqueCoordinator], SensorEntity):
+    """Sensor that lists all devices in the IR database."""
+
+    def __init__(
+        self,
+        coordinator: HaptiqueCoordinator,
+        entry: ConfigEntry,
+    ) -> None:
+        """Initialize the devices sensor."""
+        super().__init__(coordinator)
+        
+        hostname = coordinator.device_info.get("hostname", "haptique_extender")
+        
+        self._attr_name = "Database IR Devices"
+        self._attr_unique_id = f"{entry.entry_id}_ir_devices"
+        self._attr_icon = "mdi:database"
+        self._attr_has_entity_name = True
+        
+        self._attr_device_info = {
+            "identifiers": {(DOMAIN, coordinator.device_info["mac"])},
+            "name": hostname,
+            "manufacturer": "KINCONY",
+            "model": "KC868-AG",
+            "sw_version": coordinator.device_info["fw_ver"],
+        }
 
     @property
+    def native_value(self) -> int:
+        """Return the number of devices."""
+        from .ir_database import IRDatabase
+        
+        ir_db: IRDatabase = self.hass.data[DOMAIN]["ir_database"]
+        devices = ir_db.list_devices()
+        return len(devices)
+    
+    @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        """Return additional attributes."""
-        if self.entity_description.attr_fn:
-            return self.entity_description.attr_fn(self.coordinator.data)
-        return {}
+        """Return the list of devices as attributes."""
+        from .ir_database import IRDatabase
+        
+        ir_db: IRDatabase = self.hass.data[DOMAIN]["ir_database"]
+        devices = ir_db.list_devices()
+        
+        return {
+            "devices": devices,
+            "device_names": [d["name"] for d in devices],
+        }
+
+
+class HaptiqueCommandsSensor(CoordinatorEntity[HaptiqueCoordinator], SensorEntity):
+    """Sensor that lists commands (requires device selection via service call)."""
+
+    def __init__(
+        self,
+        coordinator: HaptiqueCoordinator,
+        entry: ConfigEntry,
+    ) -> None:
+        """Initialize the commands sensor."""
+        super().__init__(coordinator)
+        
+        hostname = coordinator.device_info.get("hostname", "haptique_extender")
+        
+        self._attr_name = "Database IR Commands"
+        self._attr_unique_id = f"{entry.entry_id}_ir_commands"
+        self._attr_icon = "mdi:code-braces"
+        self._attr_has_entity_name = True
+        self._selected_device: str | None = None
+        
+        self._attr_device_info = {
+            "identifiers": {(DOMAIN, coordinator.device_info["mac"])},
+            "name": hostname,
+            "manufacturer": "KINCONY",
+            "model": "KC868-AG",
+            "sw_version": coordinator.device_info["fw_ver"],
+        }
+
+    @property
+    def native_value(self) -> int:
+        """Return the number of commands for selected device."""
+        if not self._selected_device:
+            return 0
+        
+        from .ir_database import IRDatabase
+        
+        ir_db: IRDatabase = self.hass.data[DOMAIN]["ir_database"]
+        commands = ir_db.list_commands(self._selected_device)
+        return len(commands)
+    
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return the list of commands as attributes."""
+        if not self._selected_device:
+            return {
+                "selected_device": None,
+                "commands": [],
+                "command_names": [],
+            }
+        
+        from .ir_database import IRDatabase
+        
+        ir_db: IRDatabase = self.hass.data[DOMAIN]["ir_database"]
+        commands = ir_db.list_commands(self._selected_device)
+        
+        return {
+            "selected_device": self._selected_device,
+            "commands": commands,
+            "command_names": [c["name"] for c in commands],
+        }
+    
+    def set_device(self, device_name: str) -> None:
+        """Set the device to query commands for."""
+        self._selected_device = device_name
+        self.async_write_ha_state()

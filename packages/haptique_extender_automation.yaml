@@ -1,0 +1,123 @@
+# Haptique Extender - AUTOMATIONS (Enhanced with Mode-based Toggle Management)
+# Place this file in: /config/packages/haptique_extender_automation.yaml
+
+automation:
+  # ========== AUTO-REFRESH AUTOMATIONS ==========
+  
+  # Auto-refresh command list when device changes
+  - id: haptique_auto_refresh_on_device_change
+    alias: "Haptique - Auto Refresh on Device Change"
+    description: "Update command list when device selector changes"
+    trigger:
+      - platform: state
+        entity_id: input_select.haptique_device_selector
+    condition:
+      - condition: template
+        value_template: "{{ trigger.to_state.state not in ['No device available', ''] }}"
+    action:
+      - service: script.haptique_refresh_command_list
+    mode: single
+
+  # Auto-refresh on startup
+  - id: haptique_auto_refresh_on_startup
+    alias: "Haptique - Auto Refresh on Startup"
+    description: "Refresh all lists on Home Assistant startup"
+    trigger:
+      - platform: homeassistant
+        event: start
+    action:
+      - delay: "00:00:20"
+      - service: script.haptique_refresh_all
+    mode: single
+
+  # Auto-refresh after database changes
+  - id: haptique_auto_refresh_on_db_change
+    alias: "Haptique - Auto Refresh on DB Change"
+    description: "Refresh lists after learn/delete operations"
+    trigger:
+      - platform: event
+        event_type: haptique_operation
+        event_data:
+          status: success
+    condition:
+      - condition: template
+        value_template: "{{ trigger.event.data.operation in ['learn', 'delete'] }}"
+    action:
+      - delay: "00:00:02"
+      - service: script.haptique_refresh_all
+    mode: single
+
+  # ========== MODE-BASED TOGGLE MANAGEMENT ==========
+  
+  # Auto-adjust toggles when mode changes to Send
+  - id: haptique_mode_send_adjust_toggles
+    alias: "Haptique - Mode Send: Enable Existing Toggles"
+    description: "When switching to Send mode, enable both existing toggles"
+    trigger:
+      - platform: state
+        entity_id: input_select.haptique_operation_mode
+        to: "Send"
+    action:
+      - service: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.haptique_use_existing_device
+      - service: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.haptique_use_existing_command
+    mode: single
+
+  # Auto-adjust toggles when mode changes to Delete Command
+  - id: haptique_mode_delete_command_adjust_toggles
+    alias: "Haptique - Mode Delete Command: Enable Existing Toggles"
+    description: "When switching to Delete Command mode, enable both existing toggles"
+    trigger:
+      - platform: state
+        entity_id: input_select.haptique_operation_mode
+        to: "Delete Command"
+    action:
+      - service: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.haptique_use_existing_device
+      - service: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.haptique_use_existing_command
+    mode: single
+
+  # Auto-adjust toggles when mode changes to Delete Device
+  - id: haptique_mode_delete_device_adjust_toggles
+    alias: "Haptique - Mode Delete Device: Enable Existing Device Toggle"
+    description: "When switching to Delete Device mode, enable existing device toggle"
+    trigger:
+      - platform: state
+        entity_id: input_select.haptique_operation_mode
+        to: "Delete Device"
+    action:
+      - service: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.haptique_use_existing_device
+    mode: single
+
+  # Auto-adjust toggles when mode changes to List Device Commands
+  - id: haptique_mode_list_commands_adjust_toggles
+    alias: "Haptique - Mode List Commands: Enable Existing Device Toggle"
+    description: "When switching to List Device Commands mode, enable existing device toggle"
+    trigger:
+      - platform: state
+        entity_id: input_select.haptique_operation_mode
+        to: "List Device Commands"
+    action:
+      - service: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.haptique_use_existing_device
+    mode: single
+
+  # Auto-adjust toggles when mode changes to Learn
+  - id: haptique_mode_learn_adjust_toggles
+    alias: "Haptique - Mode Learn: Flexible Toggles"
+    description: "When switching to Learn mode, no automatic toggle change (user decides)"
+    trigger:
+      - platform: state
+        entity_id: input_select.haptique_operation_mode
+        to: "Learn"
+    action: []
+    mode: single

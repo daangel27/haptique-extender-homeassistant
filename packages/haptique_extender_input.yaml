@@ -1,0 +1,62 @@
+# Haptique Extender - INPUT HELPERS (Enhanced with New/Existing Toggle)
+# Place this file in: /config/packages/haptique_extender_input.yaml
+
+input_text:
+  # Learning helpers
+  haptique_device_name:
+    name: "Device Name"
+    max: 100
+    icon: mdi:devices
+  
+  haptique_command_name:
+    name: "Command Name"
+    max: 50
+    icon: mdi:identifier
+
+input_boolean:
+  # Notification toggles
+  haptique_notify_enabled:
+    name: "All Notifications"
+    icon: mdi:bell
+    initial: true
+  
+  # Toggle between new and existing for device
+  haptique_use_existing_device:
+    name: "Use Existing Device"
+    icon: mdi:database-search
+    initial: false
+  
+  # Toggle between new and existing for command
+  haptique_use_existing_command:
+    name: "Use Existing Command"
+    icon: mdi:database-search
+    initial: false
+
+input_select:
+  # Single device selector (used when haptique_use_existing_device is true)
+  haptique_device_selector:
+    name: "Select Device"
+    options:
+      - "No device available"
+    initial: "No device available"
+    icon: mdi:devices
+  
+  # Single command selector (used when haptique_use_existing_command is true)
+  haptique_command_selector:
+    name: "Select Command"
+    options:
+      - "No command available"
+    initial: "No command available"
+    icon: mdi:gesture-tap-button
+  
+  # Operation mode selector
+  haptique_operation_mode:
+    name: "Operation Mode"
+    options:
+      - "Learn"
+      - "Send"
+      - "Delete Command"
+      - "Delete Device"
+      - "List Device Commands"
+    initial: "Send"
+    icon: mdi:cog

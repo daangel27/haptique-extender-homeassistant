@@ -1,0 +1,17 @@
+# Haptique Extender - TEMPLATE SENSORS
+# Place this file in: /config/packages/haptique_extender_template.yaml
+# This creates template sensors to display helper states in the device panel
+
+template:
+  - binary_sensor:
+      # Binary sensor to mirror the notification toggle in device panel
+      - name: "Haptique Extender Notifications Enabled"
+        unique_id: haptique_extender_notifications_enabled
+        state: "{{ is_state('input_boolean.haptique_notify_enabled', 'on') }}"
+        icon: >
+          {% if is_state('input_boolean.haptique_notify_enabled', 'on') %}
+            mdi:bell
+          {% else %}
+            mdi:bell-off
+          {% endif %}
+        device_class: running
