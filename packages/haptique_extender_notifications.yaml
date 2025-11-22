@@ -1,4 +1,4 @@
-# Haptique Extender - NOTIFICATIONS (Unified)
+# Haptique Extender - NOTIFICATIONS (Unified - Fixed)
 # Place this file in: /config/packages/haptique_extender_notifications.yaml
 
 automation:
@@ -158,9 +158,8 @@ automation:
                           title: "🗑️ Device Deleted"
                           message: >
                             **Device:** {{ trigger.event.data.device_name }}
-                            **Commands deleted:** {{ trigger.event.data.data.command_count }}
                             
-                            ✅ Removed from database
+                            ✅ Device and all its commands removed from database
                           notification_id: "haptique_delete"
                   
                   # Delete Error
@@ -181,43 +180,6 @@ automation:
                             **Device:** {{ trigger.event.data.device_name }}
                             {% endif %}
                           notification_id: "haptique_delete"
-          
-          # ========== SAVE TO FIRMWARE OPERATIONS ==========
-          - conditions:
-              - condition: template
-                value_template: "{{ trigger.event.event_type == 'haptique_operation' and trigger.event.data.operation == 'save_to_firmware' }}"
-            sequence:
-              - choose:
-                  # Save Success
-                  - conditions:
-                      - condition: template
-                        value_template: "{{ trigger.event.data.status == 'success' }}"
-                    sequence:
-                      - service: persistent_notification.create
-                        data:
-                          title: "💾 Saved to Firmware"
-                          message: >
-                            **Device:** {{ trigger.event.data.device_name }}
-                            **Command:** {{ trigger.event.data.command_name }}
-                            **Stored as:** {{ trigger.event.data.data.stored_name }}
-                            
-                            ✅ Command saved to device firmware!
-                          notification_id: "haptique_firmware"
-                  
-                  # Save Error
-                  - conditions:
-                      - condition: template
-                        value_template: "{{ trigger.event.data.status == 'error' }}"
-                    sequence:
-                      - service: persistent_notification.create
-                        data:
-                          title: "❌ Firmware Save Error"
-                          message: >
-                            **Error:** {{ trigger.event.data.error }}
-                            
-                            **Device:** {{ trigger.event.data.device_name }}
-                            **Command:** {{ trigger.event.data.command_name }}
-                          notification_id: "haptique_firmware"
           
           # ========== LIST COMMANDS OPERATIONS ==========
           - conditions:
