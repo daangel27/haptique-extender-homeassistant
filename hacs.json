@@ -1,7 +1,9 @@
 {
   "name": "Haptique Extender",
   "render_readme": true,
+  "content_in_root": false,
   "domains": ["haptique_extender"],
-  "homeassistant": "2025.2.0"
-  "integration_type": "hub"
+  "homeassistant": "2025.2.0",
+  "integration_type": "hub",
+  "iot_class": "local_push"
 }
