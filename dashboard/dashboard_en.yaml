@@ -222,6 +222,35 @@ views:
               specific device  {% else %}  *No devices found in database*
 
               💡 Use "Learn" mode to add your first device!  {% endif %}
+          - type: heading
+            icon: mdi:notification-clear-all
+            heading: Notifications
+            heading_style: title
+            grid_options:
+              columns: full
+              rows: 1
+          - type: entities
+            entities:
+              - entity: input_boolean.haptique_notify_enabled
+                name: Enable All Notifications
+            show_header_toggle: false
+          - type: markdown
+            content: >
+              ### Notification Types
+
+              When enabled, you'll receive notifications for:
+
+              **🎓 Learning:** - Mode activated - Command learned -
+              Timeout/errors
+
+              **📤 Send:** - Command sent successfully - Send errors
+
+              **🗑️ Delete:** - Command/device deleted - Delete errors
+
+              **📋 List Commands:** - Command list displayed - No commands found
+              info
+
+              **🌐 Connection:** - Connection lost/restored
   - type: sections
     title: Database
     icon: mdi:monitor-eye
@@ -269,38 +298,6 @@ views:
               - entity: sensor.haptique_extender_mac_address
               - entity: sensor.haptique_extender_firmware_version
     cards: []
-  - type: sections
-    title: Settings
-    icon: mdi:cog
-    path: settings
-    max_columns: 1
-    sections:
-      - type: grid
-        cards:
-          - type: heading
-            heading: 🔔 Notifications
-          - type: entities
-            entities:
-              - entity: input_boolean.haptique_notify_enabled
-                name: Enable All Notifications
-            show_header_toggle: false
-          - type: markdown
-            content: >
-              ### Notification Types
-
-              When enabled, you'll receive notifications for:
-
-              **🎓 Learning:** - Mode activated - Command learned -
-              Timeout/errors
-
-              **📤 Send:** - Command sent successfully - Send errors
-
-              **🗑️ Delete:** - Command/device deleted - Delete errors
-
-              **📋 List Commands:** - Command list displayed - No commands found
-              info
-
-              **🌐 Connection:** - Connection lost/restored
   - type: sections
     title: Help
     icon: mdi:help-circle
