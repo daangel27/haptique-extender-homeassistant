@@ -200,34 +200,10 @@ views:
                 attribute: frames
                 name: Frames
             show_header_toggle: false
-  - type: sections
-    title: Database
-    icon: mdi:database
-    path: database
-    max_columns: 2
-    sections:
-      - type: grid
-        cards:
           - type: heading
-            heading: 📊 Database Statistics
-          - type: entities
-            entities:
-              - entity: sensor.haptique_extender_database_ir_devices
-                name: Total Devices
-                icon: mdi:devices
-              - entity: sensor.haptique_extender_database_ir_commands
-                name: Commands (selected device)
-                icon: mdi:code-braces
-              - entity: sensor.haptique_extender_hub_ir_commands_stored
-                name: Hub Commands
-                icon: mdi:chip
-              - entity: sensor.haptique_extender_hub_ir_storage_usage
-                name: Hub Storage Usage
-            show_header_toggle: false
-      - type: grid
-        cards:
-          - type: heading
-            heading: 📋 Device List
+            icon: ''
+            heading: 📋 Database Device List
+            heading_style: title
           - type: markdown
             content: >
               {% set devices =
@@ -246,44 +222,13 @@ views:
               specific device  {% else %}  *No devices found in database*
 
               💡 Use "Learn" mode to add your first device!  {% endif %}
-  - type: sections
-    title: Sensors
-    icon: mdi:monitor-eye
-    path: sensors
-    max_columns: 2
-    sections:
-      - type: grid
-        cards:
           - type: heading
-            heading: 🌐 Network & Device
-          - type: entities
-            entities:
-              - entity: binary_sensor.haptique_extender_wifi_connected
-              - entity: sensor.haptique_extender_wifi_signal
-              - entity: sensor.haptique_extender_wifi_ssid
-              - entity: sensor.haptique_extender_ip_address
-              - entity: sensor.haptique_extender_mac_address
-              - entity: sensor.haptique_extender_firmware_version
-      - type: grid
-        cards:
-          - type: heading
-            heading: 💾 Storage & Learning
-          - type: entities
-            entities:
-              - entity: sensor.haptique_extender_last_learn_ir_code
-              - entity: sensor.haptique_extender_hub_ir_commands_stored
-              - entity: sensor.haptique_extender_hub_ir_storage_max
-              - entity: sensor.haptique_extender_hub_ir_storage_usage
-  - type: sections
-    title: Settings
-    icon: mdi:cog
-    path: settings
-    max_columns: 1
-    sections:
-      - type: grid
-        cards:
-          - type: heading
-            heading: 🔔 Notifications
+            icon: mdi:notification-clear-all
+            heading: Notifications
+            heading_style: title
+            grid_options:
+              columns: full
+              rows: 1
           - type: entities
             entities:
               - entity: input_boolean.haptique_notify_enabled
@@ -306,6 +251,53 @@ views:
               info
 
               **🌐 Connection:** - Connection lost/restored
+  - type: sections
+    title: Database
+    icon: mdi:monitor-eye
+    path: database
+    max_columns: 2
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: 📊 Database Statistics (haptique_ir_database.json)
+            heading_style: title
+          - type: entities
+            entities:
+              - entity: sensor.haptique_extender_database_ir_devices
+                name: Total Devices
+                icon: mdi:devices
+              - entity: sensor.haptique_extender_database_ir_commands
+                name: Commands (selected device)
+                icon: mdi:code-braces
+            show_header_toggle: false
+          - type: heading
+            heading: 📊 Haptique Extender Storage Statistics
+            heading_style: title
+          - type: entities
+            entities:
+              - entity: sensor.haptique_extender_hub_ir_commands_stored
+                name: Hub Commands
+                icon: mdi:chip
+              - entity: sensor.haptique_extender_hub_ir_storage_usage
+                name: Hub Storage Usage
+              - entity: sensor.haptique_extender_hub_ir_storage_max
+                name: Hub Storage Max Commands
+            show_header_toggle: false
+      - type: grid
+        cards:
+          - type: heading
+            heading: 🌐 Network & Device
+            heading_style: title
+          - type: entities
+            entities:
+              - entity: binary_sensor.haptique_extender_wifi_connected
+              - entity: sensor.haptique_extender_wifi_signal
+              - entity: sensor.haptique_extender_wifi_ssid
+              - entity: sensor.haptique_extender_ip_address
+              - entity: sensor.haptique_extender_mac_address
+              - entity: sensor.haptique_extender_firmware_version
+    cards: []
   - type: sections
     title: Help
     icon: mdi:help-circle
