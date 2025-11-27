@@ -1,4 +1,4 @@
-"""IR Database for Haptique Extender - Strict Validation Version."""
+"""IR Database for Haptique Extender - Case-Insensitive Version."""
 from __future__ import annotations
 
 import json
@@ -49,13 +49,31 @@ def validate_name(name: str) -> str:
 
 
 class IRDatabase:
-    """IR Database manager."""
+    """IR Database manager with case-insensitive lookups."""
 
     def __init__(self, hass: HomeAssistant) -> None:
         """Initialize the database."""
         self.hass = hass
         self._data: dict[str, Any] = {"devices": {}}
         self._file_path = Path(hass.config.path("haptique_ir_database.json"))
+
+    def _find_device_key(self, device_name: str) -> str | None:
+        """Find the actual device key (case-insensitive)."""
+        device_lower = device_name.lower()
+        for key in self._data["devices"].keys():
+            if key.lower() == device_lower:
+                return key
+        return None
+
+    def _find_command_key(self, device_key: str, command_name: str) -> str | None:
+        """Find the actual command key (case-insensitive)."""
+        if device_key not in self._data["devices"]:
+            return None
+        command_lower = command_name.lower()
+        for key in self._data["devices"][device_key]["commands"].keys():
+            if key.lower() == command_lower:
+                return key
+        return None
 
     async def async_load(self) -> None:
         """Load database from file."""
@@ -105,17 +123,20 @@ class IRDatabase:
             _LOGGER.error("Cannot add device: %s", err)
             return False
         
-        if device_name not in self._data["devices"]:
-            self._data["devices"][device_name] = {
-                "created_at": dt_util.utcnow().isoformat(),
-                "commands": {},
-            }
-            await self.async_save()
-            _LOGGER.info("Device '%s' added to database", device_name)
+        # Check if device already exists (case-insensitive)
+        existing_key = self._find_device_key(device_name)
+        if existing_key:
+            _LOGGER.info("Device '%s' already exists (found as '%s')", device_name, existing_key)
             return True
-        else:
-            _LOGGER.info("Device '%s' already exists", device_name)
-            return True
+        
+        # Create new device
+        self._data["devices"][device_name] = {
+            "created_at": dt_util.utcnow().isoformat(),
+            "commands": {},
+        }
+        await self.async_save()
+        _LOGGER.info("Device '%s' added to database", device_name)
+        return True
 
     async def add_command(
         self,
@@ -135,13 +156,16 @@ class IRDatabase:
             _LOGGER.error("Cannot add command: %s", err)
             return False
         
-        # Add device if it doesn't exist
-        if device_name not in self._data["devices"]:
+        # Find actual device key (case-insensitive)
+        device_key = self._find_device_key(device_name)
+        if not device_key:
+            # Device doesn't exist, create it
             await self.add_device(device_name)
+            device_key = device_name
 
-        _LOGGER.info("Adding command '%s' to device '%s'", command_name, device_name)
+        _LOGGER.info("Adding command '%s' to device '%s'", command_name, device_key)
 
-        self._data["devices"][device_name]["commands"][command_name] = {
+        self._data["devices"][device_key]["commands"][command_name] = {
             "freq_khz": freq_khz,
             "duty": duty,
             "repeat": repeat,
@@ -149,13 +173,13 @@ class IRDatabase:
             "learned_at": dt_util.utcnow().isoformat(),
         }
         await self.async_save()
-        _LOGGER.info("Command '%s' added to device '%s'", command_name, device_name)
+        _LOGGER.info("Command '%s' added to device '%s'", command_name, device_key)
         return True
 
     def get_command(
         self, device_name: str, command_name: str
     ) -> dict[str, Any] | None:
-        """Get a specific command."""
+        """Get a specific command (case-insensitive)."""
         try:
             # Validate names for lookup
             device_name = validate_name(device_name)
@@ -164,11 +188,24 @@ class IRDatabase:
             _LOGGER.error("Cannot get command: %s", err)
             return None
         
-        if device_name in self._data["devices"]:
-            commands = self._data["devices"][device_name]["commands"]
-            if command_name in commands:
-                return commands[command_name]
-        return None
+        # Find actual device key (case-insensitive)
+        device_key = self._find_device_key(device_name)
+        if not device_key:
+            _LOGGER.warning("Device '%s' not found in database", device_name)
+            return None
+        
+        # Find actual command key (case-insensitive)
+        command_key = self._find_command_key(device_key, command_name)
+        if not command_key:
+            _LOGGER.warning(
+                "Command '%s' not found for device '%s'",
+                command_name,
+                device_key,
+            )
+            return None
+        
+        _LOGGER.debug("Found command '%s' for device '%s'", command_key, device_key)
+        return self._data["devices"][device_key]["commands"][command_key]
 
     def list_devices(self) -> list[dict[str, Any]]:
         """List all devices."""
@@ -183,7 +220,7 @@ class IRDatabase:
         return devices
 
     def list_commands(self, device_name: str) -> list[dict[str, Any]]:
-        """List all commands for a device."""
+        """List all commands for a device (case-insensitive)."""
         try:
             # Validate device name for lookup
             device_name = validate_name(device_name)
@@ -191,11 +228,14 @@ class IRDatabase:
             _LOGGER.error("Cannot list commands: %s", err)
             return []
         
-        if device_name not in self._data["devices"]:
+        # Find actual device key (case-insensitive)
+        device_key = self._find_device_key(device_name)
+        if not device_key:
+            _LOGGER.warning("Device '%s' not found in database", device_name)
             return []
 
         commands = []
-        device_commands = self._data["devices"][device_name]["commands"]
+        device_commands = self._data["devices"][device_key]["commands"]
         
         for command_name, command_data in device_commands.items():
             commands.append({
@@ -209,7 +249,7 @@ class IRDatabase:
         return commands
 
     async def delete_command(self, device_name: str, command_name: str) -> bool:
-        """Delete a command from a device."""
+        """Delete a command from a device (case-insensitive)."""
         try:
             # Validate names for lookup
             device_name = validate_name(device_name)
@@ -218,35 +258,41 @@ class IRDatabase:
             _LOGGER.error("Cannot delete command: %s", err)
             return False
         
-        if device_name in self._data["devices"]:
-            commands = self._data["devices"][device_name]["commands"]
-            if command_name in commands:
-                del commands[command_name]
-                await self.async_save()
-                _LOGGER.info(
-                    "Command '%s' deleted from device '%s'",
-                    command_name,
-                    device_name,
-                )
-                
-                # If no more commands, optionally delete device
-                if not commands:
-                    _LOGGER.info(
-                        "Device '%s' has no more commands",
-                        device_name,
-                    )
-                
-                return True
+        # Find actual device key (case-insensitive)
+        device_key = self._find_device_key(device_name)
+        if not device_key:
+            _LOGGER.warning("Device '%s' not found", device_name)
+            return False
         
-        _LOGGER.warning(
-            "Command '%s' not found in device '%s'",
-            command_name,
-            device_name,
+        # Find actual command key (case-insensitive)
+        command_key = self._find_command_key(device_key, command_name)
+        if not command_key:
+            _LOGGER.warning(
+                "Command '%s' not found in device '%s'",
+                command_name,
+                device_key,
+            )
+            return False
+        
+        del self._data["devices"][device_key]["commands"][command_key]
+        await self.async_save()
+        _LOGGER.info(
+            "Command '%s' deleted from device '%s'",
+            command_key,
+            device_key,
         )
-        return False
+        
+        # If no more commands, optionally delete device
+        if not self._data["devices"][device_key]["commands"]:
+            _LOGGER.info(
+                "Device '%s' has no more commands",
+                device_key,
+            )
+        
+        return True
 
     async def delete_device(self, device_name: str) -> bool:
-        """Delete a device and all its commands."""
+        """Delete a device and all its commands (case-insensitive)."""
         try:
             # Validate device name for lookup
             device_name = validate_name(device_name)
@@ -254,14 +300,16 @@ class IRDatabase:
             _LOGGER.error("Cannot delete device: %s", err)
             return False
         
-        if device_name in self._data["devices"]:
-            del self._data["devices"][device_name]
-            await self.async_save()
-            _LOGGER.info("Device '%s' deleted", device_name)
-            return True
+        # Find actual device key (case-insensitive)
+        device_key = self._find_device_key(device_name)
+        if not device_key:
+            _LOGGER.warning("Device '%s' not found", device_name)
+            return False
         
-        _LOGGER.warning("Device '%s' not found", device_name)
-        return False
+        del self._data["devices"][device_key]
+        await self.async_save()
+        _LOGGER.info("Device '%s' deleted", device_key)
+        return True
 
     def get_all_data(self) -> dict[str, Any]:
         """Get all database data."""
