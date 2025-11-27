@@ -4,14 +4,62 @@
 
 template:
   - binary_sensor:
-      # Binary sensor to mirror the notification toggle in device panel
-      - name: "Haptique Extender Notifications Enabled"
-        unique_id: haptique_extender_notifications_enabled
-        state: "{{ is_state('input_boolean.haptique_notify_enabled', 'on') }}"
+      # Learning notifications
+      - name: "Haptique Extender Learning Notifications"
+        unique_id: haptique_extender_learning_notifications
+        state: "{{ is_state('input_boolean.haptique_notify_learning', 'on') }}"
         icon: >
-          {% if is_state('input_boolean.haptique_notify_enabled', 'on') %}
-            mdi:bell
+          {% if is_state('input_boolean.haptique_notify_learning', 'on') %}
+            mdi:school
           {% else %}
-            mdi:bell-off
+            mdi:school-outline
+          {% endif %}
+        device_class: running
+
+      # Send notifications
+      - name: "Haptique Extender Send Notifications"
+        unique_id: haptique_extender_send_notifications
+        state: "{{ is_state('input_boolean.haptique_notify_send', 'on') }}"
+        icon: >
+          {% if is_state('input_boolean.haptique_notify_send', 'on') %}
+            mdi:send
+          {% else %}
+            mdi:send-outline
+          {% endif %}
+        device_class: running
+
+      # Delete notifications
+      - name: "Haptique Extender Delete Notifications"
+        unique_id: haptique_extender_delete_notifications
+        state: "{{ is_state('input_boolean.haptique_notify_delete', 'on') }}"
+        icon: >
+          {% if is_state('input_boolean.haptique_notify_delete', 'on') %}
+            mdi:delete
+          {% else %}
+            mdi:delete-outline
+          {% endif %}
+        device_class: running
+
+      # List notifications
+      - name: "Haptique Extender List Notifications"
+        unique_id: haptique_extender_list_notifications
+        state: "{{ is_state('input_boolean.haptique_notify_list', 'on') }}"
+        icon: >
+          {% if is_state('input_boolean.haptique_notify_list', 'on') %}
+            mdi:format-list-bulleted
+          {% else %}
+            mdi:format-list-bulleted-square
+          {% endif %}
+        device_class: running
+
+      # Connection notifications
+      - name: "Haptique Extender Connection Notifications"
+        unique_id: haptique_extender_connection_notifications
+        state: "{{ is_state('input_boolean.haptique_notify_connection', 'on') }}"
+        icon: >
+          {% if is_state('input_boolean.haptique_notify_connection', 'on') %}
+            mdi:wifi
+          {% else %}
+            mdi:wifi-off
           {% endif %}
         device_class: running

@@ -200,3 +200,89 @@ script:
         data:
           value: ""
     mode: single
+
+  # ========== NOTIFICATION PRESET SCRIPTS ==========
+  haptique_preset_development_mode:
+    alias: "Haptique - Preset: Development Mode"
+    description: "Only connection alerts (errors only)"
+    icon: mdi:bug
+    sequence:
+      - service: input_boolean.turn_off
+        target:
+          entity_id:
+            - input_boolean.haptique_notify_learning
+            - input_boolean.haptique_notify_send
+            - input_boolean.haptique_notify_delete
+            - input_boolean.haptique_notify_list
+      - service: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.haptique_notify_connection
+      - service: persistent_notification.create
+        data:
+          title: "🔔 Development Mode"
+          message: "Only connection alerts enabled"
+          notification_id: "haptique_preset"
+    mode: single
+
+  haptique_preset_silent_mode:
+    alias: "Haptique - Preset: Silent Mode"
+    description: "No notifications at all"
+    icon: mdi:bell-off
+    sequence:
+      - service: input_boolean.turn_off
+        target:
+          entity_id:
+            - input_boolean.haptique_notify_learning
+            - input_boolean.haptique_notify_send
+            - input_boolean.haptique_notify_delete
+            - input_boolean.haptique_notify_list
+            - input_boolean.haptique_notify_connection
+      - service: persistent_notification.create
+        data:
+          title: "🔕 Silent Mode"
+          message: "All notifications disabled"
+          notification_id: "haptique_preset"
+    mode: single
+
+  haptique_preset_full_monitoring:
+    alias: "Haptique - Preset: Full Monitoring"
+    description: "All notifications enabled"
+    icon: mdi:bell-ring
+    sequence:
+      - service: input_boolean.turn_on
+        target:
+          entity_id:
+            - input_boolean.haptique_notify_learning
+            - input_boolean.haptique_notify_send
+            - input_boolean.haptique_notify_delete
+            - input_boolean.haptique_notify_list
+            - input_boolean.haptique_notify_connection
+      - service: persistent_notification.create
+        data:
+          title: "🔔 Full Monitoring"
+          message: "All notifications enabled"
+          notification_id: "haptique_preset"
+    mode: single
+
+  haptique_preset_learning_session:
+    alias: "Haptique - Preset: Learning Session"
+    description: "Only learning feedback"
+    icon: mdi:school
+    sequence:
+      - service: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.haptique_notify_learning
+      - service: input_boolean.turn_off
+        target:
+          entity_id:
+            - input_boolean.haptique_notify_send
+            - input_boolean.haptique_notify_delete
+            - input_boolean.haptique_notify_list
+            - input_boolean.haptique_notify_connection
+      - service: persistent_notification.create
+        data:
+          title: "🎓 Learning Session"
+          message: "Only learning notifications enabled"
+          notification_id: "haptique_preset"
+    mode: single
+

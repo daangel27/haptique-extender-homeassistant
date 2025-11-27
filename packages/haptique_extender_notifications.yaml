@@ -1,26 +1,26 @@
-# Haptique Extender - NOTIFICATIONS (Unified - Fixed)
+# Haptique Extender - NOTIFICATIONS (Granular Control)
 # Place this file in: /config/packages/haptique_extender_notifications.yaml
 
 automation:
   # ========== UNIFIED NOTIFICATION AUTOMATION ==========
   - id: haptique_unified_notifications
     alias: "Haptique - Unified Notifications"
-    description: "Single automation handling all operation notifications"
+    description: "Single automation handling all operation notifications with granular control"
     trigger:
       - platform: event
         event_type: haptique_operation
       - platform: event
         event_type: haptique_ir_captured
-    condition:
-      - condition: state
-        entity_id: input_boolean.haptique_notify_enabled
-        state: "on"
     action:
       - choose:
           # ========== LEARN OPERATIONS ==========
           - conditions:
               - condition: template
                 value_template: "{{ trigger.event.event_type == 'haptique_operation' and trigger.event.data.operation == 'learn' }}"
+              # Learning notifications toggle must be ON
+              - condition: state
+                entity_id: input_boolean.haptique_notify_learning
+                state: "on"
             sequence:
               - choose:
                   # Learn Started
@@ -95,6 +95,10 @@ automation:
           - conditions:
               - condition: template
                 value_template: "{{ trigger.event.event_type == 'haptique_operation' and trigger.event.data.operation == 'send' }}"
+              # Send notifications toggle must be ON
+              - condition: state
+                entity_id: input_boolean.haptique_notify_send
+                state: "on"
             sequence:
               - choose:
                   # Send Success
@@ -131,6 +135,10 @@ automation:
           - conditions:
               - condition: template
                 value_template: "{{ trigger.event.event_type == 'haptique_operation' and trigger.event.data.operation == 'delete' }}"
+              # Delete notifications toggle must be ON
+              - condition: state
+                entity_id: input_boolean.haptique_notify_delete
+                state: "on"
             sequence:
               - choose:
                   # Delete Command Success
@@ -185,6 +193,10 @@ automation:
           - conditions:
               - condition: template
                 value_template: "{{ trigger.event.event_type == 'haptique_operation' and trigger.event.data.operation == 'list_commands' }}"
+              # List notifications toggle must be ON
+              - condition: state
+                entity_id: input_boolean.haptique_notify_list
+                state: "on"
             sequence:
               - choose:
                   # List Success
@@ -227,6 +239,10 @@ automation:
           - conditions:
               - condition: template
                 value_template: "{{ trigger.event.event_type == 'haptique_ir_captured' }}"
+              # Use learning toggle for manual captures
+              - condition: state
+                entity_id: input_boolean.haptique_notify_learning
+                state: "on"
             sequence:
               - service: persistent_notification.create
                 data:
@@ -254,8 +270,9 @@ automation:
         for:
           seconds: 10
     condition:
+      # Connection toggle must be ON
       - condition: state
-        entity_id: input_boolean.haptique_notify_enabled
+        entity_id: input_boolean.haptique_notify_connection
         state: "on"
     action:
       - service: persistent_notification.create
@@ -281,8 +298,9 @@ automation:
     condition:
       - condition: template
         value_template: "{{ trigger.from_state.state == 'unavailable' }}"
+      # Connection toggle must be ON
       - condition: state
-        entity_id: input_boolean.haptique_notify_enabled
+        entity_id: input_boolean.haptique_notify_connection
         state: "on"
     action:
       - service: persistent_notification.create
