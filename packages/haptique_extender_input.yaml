@@ -14,10 +14,30 @@ input_text:
     icon: mdi:identifier
 
 input_boolean:
-  # Notification toggles
-  haptique_notify_enabled:
-    name: "All Notifications"
-    icon: mdi:bell
+  # Notification toggles by type
+  haptique_notify_learning:
+    name: "Learning Notifications"
+    icon: mdi:school
+    initial: true
+
+  haptique_notify_send:
+    name: "Send Notifications"
+    icon: mdi:send
+    initial: true
+
+  haptique_notify_delete:
+    name: "Delete Notifications"
+    icon: mdi:delete
+    initial: true
+
+  haptique_notify_list:
+    name: "List Notifications"
+    icon: mdi:format-list-bulleted
+    initial: true
+
+  haptique_notify_connection:
+    name: "Connection Notifications"
+    icon: mdi:wifi
     initial: true
   
   # Toggle between new and existing for device

@@ -179,8 +179,6 @@ views:
               -                    Shows all commands with frequency info
 
               {% endif %}
-      - type: grid
-        cards:
           - type: heading
             heading: 📊 Last Learned Code
           - type: entities
@@ -222,35 +220,77 @@ views:
               specific device  {% else %}  *No devices found in database*
 
               💡 Use "Learn" mode to add your first device!  {% endif %}
+      - type: grid
+        cards:
           - type: heading
-            icon: mdi:notification-clear-all
-            heading: Notifications
+            icon: mdi:bell
+            heading: Notification Settings
             heading_style: title
             grid_options:
               columns: full
               rows: 1
+          - type: markdown
+            content: >
+              ### Notification Control
+
+              Control each type of notification independently.
+
+              Use the toggles below or apply a Quick Preset for common
+              configurations.
           - type: entities
+            title: Notification Types
             entities:
-              - entity: input_boolean.haptique_notify_enabled
-                name: Enable All Notifications
+              - entity: input_boolean.haptique_notify_learning
+                name: 🎓 Learning
+                secondary_info: Mode activation, success, timeout, errors
+              - entity: input_boolean.haptique_notify_send
+                name: 📤 Send
+                secondary_info: Command transmission, errors
+              - entity: input_boolean.haptique_notify_delete
+                name: 🗑️ Delete
+                secondary_info: Command/device deletion, errors
+              - entity: input_boolean.haptique_notify_list
+                name: 📋 List
+                secondary_info: Command lists, info messages
+              - entity: input_boolean.haptique_notify_connection
+                name: 🌐 Connection
+                secondary_info: WiFi lost/restored alerts
+            show_header_toggle: false
+          - type: entities
+            title: 💡 Quick Presets
+            entities:
+              - type: button
+                name: 🐛 Development Mode
+                action_name: Apply
+                tap_action:
+                  action: call-service
+                  service: script.haptique_preset_development_mode
+              - type: button
+                name: 🔕 Silent Mode
+                action_name: Apply
+                tap_action:
+                  action: call-service
+                  service: script.haptique_preset_silent_mode
+              - type: button
+                name: 🔔 Full Monitoring
+                action_name: Apply
+                tap_action:
+                  action: call-service
+                  service: script.haptique_preset_full_monitoring
+              - type: button
+                name: 🎓 Learning Session
+                action_name: Apply
+                tap_action:
+                  action: call-service
+                  service: script.haptique_preset_learning_session
             show_header_toggle: false
           - type: markdown
             content: >
-              ### Notification Types
+              **Presets explained:**
 
-              When enabled, you'll receive notifications for:
-
-              **🎓 Learning:** - Mode activated - Command learned -
-              Timeout/errors
-
-              **📤 Send:** - Command sent successfully - Send errors
-
-              **🗑️ Delete:** - Command/device deleted - Delete errors
-
-              **📋 List Commands:** - Command list displayed - No commands found
-              info
-
-              **🌐 Connection:** - Connection lost/restored
+              - **Development:** Only connection alerts - **Silent:** No
+              notifications - **Full Monitoring:** All enabled - **Learning:**
+              Only learning feedback
   - type: sections
     title: Database
     icon: mdi:monitor-eye
